@@ -12,16 +12,8 @@ import { ReportsPage } from './pages/ReportsPage';
 import { getSupabaseClient } from './lib/supabaseClient';
 
 export const App: React.FC = () => {
-  const {
-    currentPage,
-    theme,
-    user,
-    authChecked,
-    guestAccessAllowed,
-    setUser,
-    setAuthChecked,
-    syncWithCloud,
-  } = useFibroStore();
+  const { currentPage, theme, user, authChecked, setUser, setAuthChecked, syncWithCloud } =
+    useFibroStore();
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -84,8 +76,8 @@ export const App: React.FC = () => {
     );
   }
 
-  // First Screen Gate: Ask user to create account / login before continuing
-  if (!user && !guestAccessAllowed) {
+  // First Screen Gate: Always require account creation / login before continuing
+  if (!user) {
     return (
       <>
         <WelcomeAuthPage />

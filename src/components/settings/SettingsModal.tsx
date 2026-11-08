@@ -7,15 +7,11 @@ export const SettingsModal: React.FC = () => {
     isSettingsModalOpen,
     setSettingsModalOpen,
     user,
-    syncWithCloud,
-    isSyncing,
-    lastSyncedAt,
     signOut,
     patientMeta,
     updatePatientMeta,
     records,
     openReportForPeriod,
-    resetDemoData,
     showToast,
   } = useFibroStore();
 
@@ -124,7 +120,7 @@ export const SettingsModal: React.FC = () => {
           </div>
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">
-              Preferências, Conta & Exportação Clínica
+              Preferências & Exportação Clínica
             </span>
             <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
               Configurações do FibroCare
@@ -134,19 +130,17 @@ export const SettingsModal: React.FC = () => {
 
         {/* SECTION 1: Export Detailed Report for Doctor by Period */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-rosebrand-50 via-rosebrand-50/50 to-white dark:from-zinc-800/80 dark:to-zinc-900 border border-rosebrand-200/80 dark:border-zinc-700 space-y-4">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-600 dark:text-rosebrand-400">
-                🩺 Para Consulta Médica
-              </span>
-              <h4 className="text-sm font-bold text-zinc-900 dark:text-white mt-0.5">
-                Exportar Relatório Detalhado por Período
-              </h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Escolha o período desejado para gerar o laudo com índices ACR (WPI/SSS), mapa de dor
-                e medicação SOS para enviar ao seu médico.
-              </p>
-            </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-600 dark:text-rosebrand-400">
+              🩺 Para Consulta Médica
+            </span>
+            <h4 className="text-sm font-bold text-zinc-900 dark:text-white mt-0.5">
+              Exportar Relatório Detalhado por Período
+            </h4>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Escolha o período desejado para gerar o laudo com índices ACR (WPI/SSS), mapa de dor
+              e medicação SOS para enviar ao seu médico.
+            </p>
           </div>
 
           {/* Period Preset Selector */}
@@ -241,7 +235,7 @@ export const SettingsModal: React.FC = () => {
               </label>
               <input
                 type="text"
-                placeholder="Ex: Maria Clara"
+                placeholder="Digite seu nome"
                 value={patientMeta.patientName}
                 onChange={(e) => updatePatientMeta({ patientName: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700"
@@ -253,7 +247,7 @@ export const SettingsModal: React.FC = () => {
               </label>
               <input
                 type="text"
-                placeholder="Ex: Dra. Helena (Reumatologista)"
+                placeholder="Nome do(a) médico(a)"
                 value={patientMeta.doctorName}
                 onChange={(e) => updatePatientMeta({ doctorName: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700"
@@ -265,7 +259,7 @@ export const SettingsModal: React.FC = () => {
               </label>
               <input
                 type="text"
-                placeholder="Ex: Pregabalina 75mg, Duloxetina 60mg"
+                placeholder="Informe se utilizar medicações contínuas"
                 value={patientMeta.continuousMedications}
                 onChange={(e) => updatePatientMeta({ continuousMedications: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700"
@@ -274,64 +268,21 @@ export const SettingsModal: React.FC = () => {
           </div>
         </div>
 
-        {/* SECTION 3: Cloud Account & Sync Status */}
-        <div className="pt-4 border-t border-rosebrand-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
-          {user ? (
-            <>
-              <div className="text-xs">
-                <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 block">
-                  🟢 Conta Conectada ao Supabase
-                </span>
-                <span className="font-bold text-zinc-800 dark:text-zinc-200">{user.email}</span>
-                {lastSyncedAt && (
-                  <span className="text-zinc-400 ml-2">(Último sync: {lastSyncedAt})</span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={isSyncing}
-                  onClick={syncWithCloud}
-                  className="px-3.5 py-2 rounded-xl bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-800 text-rosebrand-700 dark:text-rosebrand-300 text-xs font-bold border border-rosebrand-200 dark:border-zinc-700 transition"
-                >
-                  {isSyncing ? 'Sincronizando...' : '🔄 Sincronizar Nuvem'}
-                </button>
-                <button
-                  type="button"
-                  onClick={signOut}
-                  className="px-3.5 py-2 rounded-xl bg-zinc-100 hover:bg-rose-100 dark:bg-zinc-800 dark:hover:bg-rose-950 text-zinc-600 hover:text-rose-600 dark:text-zinc-300 text-xs font-bold transition"
-                >
-                  Sair da Conta
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="w-full flex items-center justify-between">
-              <span className="text-xs text-zinc-500">
-                Modo demonstração local ativo (sem conta conectada).
-              </span>
-              <button
-                type="button"
-                onClick={signOut}
-                className="px-4 py-2 rounded-xl bg-rosebrand-500 text-white text-xs font-bold"
-              >
-                Criar Conta / Entrar
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Reset Demo Data */}
-        <div className="pt-2 border-t border-rosebrand-50 dark:border-zinc-800/60 flex justify-between items-center text-[11px] text-zinc-400">
-          <span>Restaurar exemplos de demonstração de 12 dias</span>
-          <button
-            type="button"
-            onClick={resetDemoData}
-            className="text-rosebrand-600 dark:text-rosebrand-400 font-semibold hover:underline"
-          >
-            ↻ Restaurar Dados Demo
-          </button>
-        </div>
+        {/* SECTION 3: Simple Sign Out Footer */}
+        {user && (
+          <div className="pt-4 border-t border-rosebrand-100 dark:border-zinc-800 flex items-center justify-between gap-3">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              Logado como <strong className="text-zinc-800 dark:text-zinc-200">{user.email}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={signOut}
+              className="px-3.5 py-2 rounded-xl bg-zinc-100 hover:bg-rose-100 dark:bg-zinc-800 dark:hover:bg-rose-950 text-zinc-600 hover:text-rose-600 dark:text-zinc-300 text-xs font-bold transition"
+            >
+              Sair da Conta
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

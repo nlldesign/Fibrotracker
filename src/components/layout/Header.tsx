@@ -10,7 +10,7 @@ const NAV_ITEMS: { id: PageId; icon: string; label: string }[] = [
 ];
 
 export const Header: React.FC = () => {
-  const { currentPage, setPage, toggleTheme, user, setSettingsModalOpen } = useFibroStore();
+  const { currentPage, setPage, toggleTheme, setSettingsModalOpen } = useFibroStore();
 
   return (
     <header className="print:hidden sticky top-0 z-40 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border-b border-rosebrand-100 dark:border-zinc-800/80 transition-colors">
@@ -77,12 +77,6 @@ export const Header: React.FC = () => {
           >
             <span>⚙️</span>
             <span className="hidden sm:inline">Configurações</span>
-            {user && (
-              <span
-                className="w-2 h-2 rounded-full bg-emerald-400"
-                title={`Conectado: ${user.email}`}
-              />
-            )}
           </button>
 
           {/* Dark Mode Toggle */}

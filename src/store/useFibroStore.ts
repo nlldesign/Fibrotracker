@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { DailyRecord, PageId, RecordsMap, UserProfile } from '../types/record';
-import { createDemoSeedData, formatDateKey } from '../domain/riskEngine';
+import { formatDateKey } from '../domain/riskEngine';
 import {
   deleteSingleRecordFromSupabase,
   syncLocalRecordsToSupabase,
@@ -8,9 +8,17 @@ import {
 } from '../services/recordsSyncService';
 import { getSupabaseClient } from '../lib/supabaseClient';
 
-const STORAGE_KEY = 'fibrocare_records_v1';
+const STORAGE_KEY = 'fibrocare_records_v2';
 const THEME_KEY = 'fibro_theme';
-const PATIENT_META_KEY = 'fibrocare_patient_meta_v1';
+const PATIENT_META_KEY = 'fibrocare_patient_meta_v2';
+
+// Clean up legacy demo localStorage keys so app starts completely empty
+try {
+  localStorage.removeItem('fibrocare_records_v1');
+  localStorage.removeItem('fibrocare_patient_meta_v1');
+} catch {
+  // ignore
+}
 
 interface PatientLocalMeta {
   patientName: string;
@@ -33,7 +41,7 @@ function loadPatientMeta(): PatientLocalMeta {
   return {
     patientName: '',
     doctorName: '',
-    continuousMedications: 'Pregabalina 75mg, Duloxetina 60mg',
+    continuousMedications: '',
   };
 }
 
@@ -42,7 +50,7 @@ function loadInitialRecords(): RecordsMap {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved) as RecordsMap;
-      if (parsed && Object.keys(parsed).length > 0) {
+      if (parsed && typeof parsed === 'object') {
         Object.keys(parsed).forEach((k) => {
           if (!Array.isArray(parsed[k].bodyZones)) parsed[k].bodyZones = [];
           if (!Array.isArray(parsed[k].painQualities)) parsed[k].painQualities = [];
@@ -53,11 +61,9 @@ function loadInitialRecords(): RecordsMap {
       }
     }
   } catch {
-    // Fallback to demo data
+    // ignore
   }
-  const seeded = createDemoSeedData();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-  return seeded;
+  return {};
 }
 
 function loadInitialTheme(): 'light' | 'dark' {
@@ -73,10 +79,9 @@ interface FibroStore {
   theme: 'light' | 'dark';
   toastMessage: string | null;
 
-  // Auth, Onboarding Gate & Settings State
+  // Auth & Settings State
   user: UserProfile | null;
   authChecked: boolean;
-  guestAccessAllowed: boolean;
   isSettingsModalOpen: boolean;
   isSyncing: boolean;
   lastSyncedAt: string | null;
@@ -95,7 +100,6 @@ interface FibroStore {
 
   saveRecord: (dateKey: string, record: DailyRecord) => void;
   deleteRecord: (dateKey: string) => void;
-  resetDemoData: () => void;
   toggleTheme: () => void;
   showToast: (msg: string) => void;
 
@@ -103,7 +107,6 @@ interface FibroStore {
   setSettingsModalOpen: (open: boolean) => void;
   setUser: (user: UserProfile | null) => void;
   setAuthChecked: (checked: boolean) => void;
-  setGuestAccessAllowed: (allowed: boolean) => void;
   syncWithCloud: () => Promise<void>;
   signOut: () => Promise<void>;
   updatePatientMeta: (meta: Partial<PatientLocalMeta>) => void;
@@ -124,7 +127,6 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
 
   user: null,
   authChecked: false,
-  guestAccessAllowed: false,
   isSettingsModalOpen: false,
   isSyncing: false,
   lastSyncedAt: null,
@@ -213,18 +215,6 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     }
   },
 
-  resetDemoData: () => {
-    const demo = createDemoSeedData();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
-    const today = new Date();
-    set({
-      records: demo,
-      selectedDateStr: formatDateKey(today),
-      currentMonthDate: new Date(today.getFullYear(), today.getMonth(), 1),
-    });
-    get().showToast('Dados de demonstração restaurados!');
-  },
-
   toggleTheme: () => {
     const nextTheme = get().theme === 'dark' ? 'light' : 'dark';
     localStorage.setItem(THEME_KEY, nextTheme);
@@ -248,21 +238,16 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
   setSettingsModalOpen: (open) => set({ isSettingsModalOpen: open }),
   setUser: (user) => set({ user }),
   setAuthChecked: (checked) => set({ authChecked: checked }),
-  setGuestAccessAllowed: (allowed) => set({ guestAccessAllowed: allowed }),
 
   syncWithCloud: async () => {
-    const { user, records, showToast } = get();
+    const { user, records } = get();
     if (!user?.id) return;
 
     set({ isSyncing: true });
-    const { mergedRecords, syncedCount, error } = await syncLocalRecordsToSupabase(
-      user.id,
-      records
-    );
+    const { mergedRecords, error } = await syncLocalRecordsToSupabase(user.id, records);
     set({ isSyncing: false });
 
     if (error) {
-      showToast(`Aviso Supabase: ${error}`);
       return;
     }
 
@@ -274,7 +259,6 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
         minute: '2-digit',
       }),
     });
-    showToast(`☁️ ${syncedCount} registros sincronizados na nuvem!`);
   },
 
   signOut: async () => {
@@ -282,7 +266,15 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     if (supabase) {
       await supabase.auth.signOut();
     }
-    set({ user: null, lastSyncedAt: null, guestAccessAllowed: false, isSettingsModalOpen: false });
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(PATIENT_META_KEY);
+    set({
+      user: null,
+      records: {},
+      patientMeta: { patientName: '', doctorName: '', continuousMedications: '' },
+      lastSyncedAt: null,
+      isSettingsModalOpen: false,
+    });
     get().showToast('Sessão encerrada.');
   },
 

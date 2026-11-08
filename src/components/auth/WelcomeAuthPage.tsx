@@ -3,20 +3,12 @@ import { useFibroStore } from '../../store/useFibroStore';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 
 export const WelcomeAuthPage: React.FC = () => {
-  const {
-    setUser,
-    syncWithCloud,
-    setGuestAccessAllowed,
-    updatePatientMeta,
-    toggleTheme,
-  } = useFibroStore();
+  const { setUser, syncWithCloud, updatePatientMeta, toggleTheme } = useFibroStore();
 
   const [mode, setMode] = useState<'signup' | 'login'>('signup');
   const [fullName, setFullName] = useState('');
   const [doctorName, setDoctorName] = useState('');
-  const [continuousMedications, setContinuousMedications] = useState(
-    'Pregabalina 75mg, Duloxetina 60mg'
-  );
+  const [continuousMedications, setContinuousMedications] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,7 +45,6 @@ export const WelcomeAuthPage: React.FC = () => {
         if (error) throw error;
 
         if (data.user) {
-          // Also save profile metadata to public.profiles
           await supabase.from('profiles').upsert({
             id: data.user.id,
             full_name: cleanName,
@@ -145,8 +136,8 @@ export const WelcomeAuthPage: React.FC = () => {
           </h2>
 
           <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-            Crie sua conta gratuita para armazenar seu histórico com segurança em nuvem e acompanhar
-            sua evolução ao longo do tratamento.
+            Crie sua conta gratuita para iniciar seu diário em branco, armazenar seus registros com
+            segurança e acompanhar sua evolução ao longo do tratamento.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
@@ -178,7 +169,7 @@ export const WelcomeAuthPage: React.FC = () => {
         <div className="lg:col-span-6 bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-rosebrand-100 dark:border-zinc-800 shadow-xl">
           <div className="mb-5">
             <span className="text-[11px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">
-              Primeiro Passo
+              Acesso Pessoal
             </span>
             <h3 className="text-xl font-bold text-zinc-900 dark:text-white mt-0.5">
               {mode === 'signup'
@@ -186,7 +177,7 @@ export const WelcomeAuthPage: React.FC = () => {
                 : 'Entre na sua conta FibroCare'}
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Seus registros ficam salvos na nuvem para gerar relatórios médicos sempre que precisar.
+              Seu histórico é salvo automaticamente e protegido na sua conta.
             </p>
           </div>
 
@@ -232,7 +223,7 @@ export const WelcomeAuthPage: React.FC = () => {
                   <input
                     type="text"
                     required
-                    placeholder="Ex: Maria Clara Souza"
+                    placeholder="Digite seu nome"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-rosebrand-50/30 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rosebrand-400"
@@ -246,7 +237,7 @@ export const WelcomeAuthPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: Dra. Helena"
+                      placeholder="Nome do(a) médico(a)"
                       value={doctorName}
                       onChange={(e) => setDoctorName(e.target.value)}
                       className="w-full px-3.5 py-2 rounded-xl bg-rosebrand-50/30 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-xs"
@@ -258,7 +249,7 @@ export const WelcomeAuthPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      placeholder="Ex: Pregabalina, Duloxetina"
+                      placeholder="Se utilizar alguma medicação"
                       value={continuousMedications}
                       onChange={(e) => setContinuousMedications(e.target.value)}
                       className="w-full px-3.5 py-2 rounded-xl bg-rosebrand-50/30 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-xs"
@@ -309,22 +300,15 @@ export const WelcomeAuthPage: React.FC = () => {
               className="w-full bg-rosebrand-500 hover:bg-rosebrand-600 disabled:opacity-50 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md shadow-rosebrand-200 dark:shadow-none transition text-xs sm:text-sm uppercase tracking-wider"
             >
               {loading
-                ? 'Conectando ao Supabase...'
+                ? 'Acessando...'
                 : mode === 'signup'
-                ? 'Criar Conta e Acessar Meu Diário →'
+                ? 'Criar Conta e Iniciar Diário →'
                 : 'Entrar no Meu Diário →'}
             </button>
           </form>
 
-          <div className="mt-5 pt-4 border-t border-rosebrand-50 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-400">
-            <span>🔒 Protegido com criptografia e RLS (LGPD)</span>
-            <button
-              type="button"
-              onClick={() => setGuestAccessAllowed(true)}
-              className="text-zinc-500 hover:text-rosebrand-600 dark:hover:text-rosebrand-400 underline font-medium"
-            >
-              Testar modo demonstração offline
-            </button>
+          <div className="mt-5 pt-4 border-t border-rosebrand-50 dark:border-zinc-800 text-center text-[11px] text-zinc-400">
+            <span>🔒 Seus dados de saúde são privados e protegidos (LGPD)</span>
           </div>
         </div>
       </div>
