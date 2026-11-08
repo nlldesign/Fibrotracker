@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FibroCare - Monitor Cíclico & Alerta de Crises</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        rosebrand: {
+                            50: '#fff1f5',
+                            100: '#ffe4ec',
+                            200: '#fecdd9',
+                            300: '#fda4ba',
+                            400: '#fb7196',
+                            500: '#f43f71',
+                            600: '#e11d56',
+                            700: '#be1245',
+                            800: '#9f123e',
+                            900: '#881339',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #fecdd9;
+            border-radius: 9999px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+        }
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-pulse-soft {
+            animation: pulse-soft 3s infinite ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-fade {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 min-h-screen pb-24 md:pb-10 transition-colors duration-300 selection:bg-rosebrand-200 dark:selection:bg-rosebrand-800">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border-b border-rosebrand-100 dark:border-zinc-800/80 transition-colors">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+            <!-- Brand -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchPage('checkin')">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rosebrand-300 to-rosebrand-400 dark:from-rosebrand-600 dark:to-rosebrand-500 flex items-center justify-center text-white shadow-sm shadow-rosebrand-200 dark:shadow-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-lg sm:text-xl font-bold tracking-tight text-zinc-900 dark:text-white">FibroCare</h1>
+                        <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rosebrand-100 text-rosebrand-700 dark:bg-rosebrand-900/50 dark:text-rosebrand-300">Diário Cíclico</span>
+                    </div>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:block">Monitoramento inteligente e prevenção de crises</p>
+                </div>
+            </div>
+
+            <!-- Desktop Navigation Tabs -->
+            <nav class="hidden md:flex items-center bg-rosebrand-50/70 dark:bg-zinc-900 p-1 rounded-2xl border border-rosebrand-100 dark:border-zinc-800">
+                <button onclick="switchPage('checkin')" id="nav-desk-checkin" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2">
+                    <span>📝</span>
+                    <span>1. Registrar</span>
+                </button>
+                <button onclick="switchPage('calendar')" id="nav-desk-calendar" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2">
+                    <span>🗓️</span>
+                    <span>2. Calendário</span>
+                </button>
+                <button onclick="switchPage('insights')" id="nav-desk-insights" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2">
+                    <span>🌸</span>
+                    <span>3. Ciclo & Alertas</span>
+                </button>
+            </nav>
+
+            <!-- Actions -->
+            <div class="flex items-center space-x-2">
+                <button onclick="resetDemoData()" title="Restaurar dados de exemplo" class="p-2.5 rounded-xl bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-rosebrand-600 dark:text-zinc-400 border border-rosebrand-100 dark:border-zinc-800 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </button>
+
+                <!-- Dark Mode Toggle -->
+                <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-rosebrand-600 dark:text-amber-400 border border-rosebrand-100 dark:border-zinc-800 transition" aria-label="Alternar Tema">
+                    <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container with Separated Pages -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+
+        <!-- ========================================== -->
+        <!-- PAGE 1: TELA INICIAL - REGISTRO DIÁRIO     -->
+        <!-- ========================================== -->
+        <section id="page-checkin" class="page-fade">
+            <div class="max-w-2xl mx-auto">
+                
+                <!-- Top Quick Context Bar (Mini status of the cycle) -->
+                <div class="mb-5 bg-gradient-to-r from-rosebrand-50 via-rosebrand-50/60 to-white dark:from-zinc-900 dark:to-zinc-900 rounded-3xl p-4 border border-rosebrand-100 dark:border-zinc-800 flex items-center justify-between gap-4 shadow-sm">
+                    <div class="flex items-center space-x-3.5">
+                        <div id="mini-status-icon" class="w-12 h-12 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 flex items-center justify-center text-2xl shadow-sm shrink-0">
+                            🌸
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">Status Hoje</span>
+                                <span id="mini-risk-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">Risco Baixo</span>
+                            </div>
+                            <p id="mini-status-desc" class="text-xs text-zinc-600 dark:text-zinc-300 mt-0.5 font-medium">Como o seu corpo está se sentindo hoje?</p>
+                        </div>
+                    </div>
+                    <button onclick="switchPage('insights')" class="shrink-0 text-xs font-bold text-rosebrand-600 dark:text-rosebrand-400 hover:underline flex items-center gap-1 bg-white dark:bg-zinc-800 px-3 py-2 rounded-xl border border-rosebrand-100 dark:border-zinc-700 shadow-sm">
+                        <span>Ver Ciclo</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+
+                <!-- Main Check-in Card -->
+                <div class="bg-white dark:bg-zinc-900 rounded-3xl p-5 sm:p-8 border border-rosebrand-100 dark:border-zinc-800 shadow-sm">
+                    
+                    <!-- Date Selector Header inside Check-in -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pb-5 mb-6 border-b border-rosebrand-100 dark:border-zinc-800">
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">Check-in de Sintomas</span>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <button type="button" onclick="shiftSelectedDay(-1)" class="p-1.5 rounded-xl bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-rosebrand-600 dark:text-zinc-300 transition" title="Dia anterior">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <h2 id="panel-date-title" class="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white capitalize">Hoje</h2>
+                                <button type="button" onclick="shiftSelectedDay(1)" class="p-1.5 rounded-xl bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-rosebrand-600 dark:text-zinc-300 transition" title="Próximo dia">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                                <button type="button" onclick="selectToday()" id="btn-jump-today" class="hidden text-[11px] font-bold text-rosebrand-600 dark:text-rosebrand-400 underline ml-1">
+                                    Voltar para Hoje
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span id="panel-status-pill" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-rosebrand-50 text-rosebrand-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                Sem registro
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Form -->
+                    <form id="daily-form" onsubmit="saveDayRecord(event)" class="space-y-6">
+                        
+                        <!-- 1. Pain Level Slider -->
+                        <div class="bg-rosebrand-50/50 dark:bg-zinc-800/50 p-4 sm:p-5 rounded-2xl border border-rosebrand-100/80 dark:border-zinc-800">
+                            <div class="flex justify-between items-center mb-2">
+                                <div>
+                                    <label class="text-xs sm:text-sm font-bold uppercase text-zinc-800 dark:text-zinc-200">1. Nível de Dor Física</label>
+                                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Deslize para pontuar a dor média ou matinal</p>
+                                </div>
+                                <span id="pain-badge" class="text-base font-extrabold px-3 py-1 rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">2 / 10</span>
+                            </div>
+                            <input type="range" id="form-pain" min="0" max="10" value="2" oninput="updatePainUI(this.value)" class="w-full accent-rosebrand-500 cursor-pointer h-2.5 rounded-lg my-2">
+                            <div class="flex justify-between text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                                <span>🟢 0-3 (Estável)</span>
+                                <span>🟡 4-6 (Alerta)</span>
+                                <span>🔴 7-10 (Crise)</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. Sleep Restorativeness & 3. Fibrofog side by side on tablet/desktop -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <!-- Sleep -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-zinc-600 dark:text-zinc-400 mb-2.5">2. Qualidade do Sono</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" onclick="selectOption('sleep', 'bom')" id="btn-sleep-bom" class="sleep-btn py-3 px-2 rounded-2xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition">
+                                        <span class="text-xl">🛌</span>
+                                        <span>Reparador</span>
+                                    </button>
+                                    <button type="button" onclick="selectOption('sleep', 'leve')" id="btn-sleep-leve" class="sleep-btn py-3 px-2 rounded-2xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition">
+                                        <span class="text-xl">🥱</span>
+                                        <span>Cansado</span>
+                                    </button>
+                                    <button type="button" onclick="selectOption('sleep', 'insonia')" id="btn-sleep-insonia" class="sleep-btn py-3 px-2 rounded-2xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition">
+                                        <span class="text-xl">⚡</span>
+                                        <span>Não dormi</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Fibrofog -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-zinc-600 dark:text-zinc-400 mb-2.5">3. Névoa Mental (Fibrofog)</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" onclick="selectOption('fog', 'claro')" id="btn-fog-claro" class="fog-btn py-3 px-2 rounded-2xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition">
+                                        <span class="text-xl">✨</span>
+                                        <span>Foco Normal</span>
+                                    </button>
+                                    <button type="button" onclick="selectOption('fog', 'leve')" id="btn-fog-leve" class="fog-btn py-3 px-2 rounded-2xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition">
+                                        <span class="text-xl">🌫️</span>
+                                        <span>Distraído</span>
+                                    </button>
+                                    <button type="button" onclick="selectOption('fog', 'intenso')" id="btn-fog-intenso" class="fog-btn py-3 px-2 rounded-2xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition">
+                                        <span class="text-xl">🌪️</span>
+                                        <span>Intenso</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Early Warning Signs / Triggers Pills -->
+                        <div>
+                            <div class="mb-2.5">
+                                <label class="block text-xs font-bold uppercase text-zinc-600 dark:text-zinc-400">4. Sinais de Alerta Precoce & Gatilhos</label>
+                                <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Marque os sinais que você percebeu hoje (ajudam a prever crises futuras)</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2" id="trigger-pills">
+                                <button type="button" onclick="toggleTrigger('rigidez')" data-trigger="rigidez" class="trigger-pill px-3.5 py-2 rounded-full text-xs font-medium border transition">
+                                    🦴 Rigidez matinal
+                                </button>
+                                <button type="button" onclick="toggleTrigger('alodinia')" data-trigger="alodinia" class="trigger-pill px-3.5 py-2 rounded-full text-xs font-medium border transition">
+                                    🪶 Dor ao toque / luz
+                                </button>
+                                <button type="button" onclick="toggleTrigger('estresse')" data-trigger="estresse" class="trigger-pill px-3.5 py-2 rounded-full text-xs font-medium border transition">
+                                    🧠 Pico de estresse
+                                </button>
+                                <button type="button" onclick="toggleTrigger('clima')" data-trigger="clima" class="trigger-pill px-3.5 py-2 rounded-full text-xs font-medium border transition">
+                                    🌧️ Mudança de clima
+                                </button>
+                                <button type="button" onclick="toggleTrigger('esforco')" data-trigger="esforco" class="trigger-pill px-3.5 py-2 rounded-full text-xs font-medium border transition">
+                                    🏃‍♀️ Esforço além do limite
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 5. Notes -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-zinc-600 dark:text-zinc-400 mb-1.5">5. Anotações do Dia (Opcional)</label>
+                            <textarea id="form-notes" rows="2" placeholder="Regiões de maior dor (cervical, lombar), humor, medicação ou cuidados que aliviaram..." class="w-full bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 rounded-2xl p-3.5 text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-rosebrand-400 resize-none"></textarea>
+                        </div>
+
+                        <!-- Submit & Secondary Actions -->
+                        <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                            <button type="submit" class="flex-1 bg-rosebrand-500 hover:bg-rosebrand-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md shadow-rosebrand-200 dark:shadow-none transition text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center space-x-2">
+                                <span>Salvar Registro</span>
+                            </button>
+                            <button type="button" onclick="saveAndGoToCalendar()" class="bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-rosebrand-700 dark:text-rosebrand-300 font-semibold py-3.5 px-5 rounded-2xl border border-rosebrand-200 dark:border-zinc-700 transition text-xs flex items-center justify-center space-x-1.5">
+                                <span>Salvar e Ver Calendário</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                            <button type="button" id="btn-delete-day" onclick="deleteSelectedDay()" class="hidden p-3.5 rounded-2xl bg-zinc-100 hover:bg-rose-100 text-zinc-500 hover:text-rose-600 dark:bg-zinc-800 dark:hover:bg-rose-950/50 dark:text-zinc-400 transition flex items-center justify-center" title="Apagar registro deste dia">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- PAGE 2: CALENDÁRIO CÍCLICO                 -->
+        <!-- ========================================== -->
+        <section id="page-calendar" class="hidden page-fade">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Calendar Box -->
+                <div class="lg:col-span-8 bg-rosebrand-50/40 dark:bg-zinc-900 rounded-3xl p-5 sm:p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm">
+                    <!-- Calendar Header -->
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">Visão Mensal do Ciclo</span>
+                            <h2 id="month-title" class="text-xl font-bold text-zinc-900 dark:text-white capitalize">Outubro 2026</h2>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="navigateMonth(-1)" class="p-2.5 rounded-xl bg-white dark:bg-zinc-800 hover:bg-rosebrand-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-rosebrand-100 dark:border-zinc-700 transition shadow-sm" aria-label="Mês anterior">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <button onclick="goToCurrentMonth()" class="px-3 py-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-rosebrand-100 dark:hover:bg-zinc-700 text-xs font-semibold text-rosebrand-600 dark:text-rosebrand-400 border border-rosebrand-100 dark:border-zinc-700 transition shadow-sm">
+                                Mês Atual
+                            </button>
+                            <button onclick="navigateMonth(1)" class="p-2.5 rounded-xl bg-white dark:bg-zinc-800 hover:bg-rosebrand-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-rosebrand-100 dark:border-zinc-700 transition shadow-sm" aria-label="Próximo mês">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Days of Week -->
+                    <div class="grid grid-cols-7 gap-1.5 sm:gap-2.5 text-center text-[11px] font-bold uppercase tracking-wider text-rosebrand-400 dark:text-zinc-500 mb-3">
+                        <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+                    </div>
+
+                    <!-- Calendar Cells Container -->
+                    <div id="calendar-cells" class="grid grid-cols-7 gap-1.5 sm:gap-2.5">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Visual Legend -->
+                    <div class="mt-6 pt-5 border-t border-rosebrand-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-600 dark:text-zinc-400">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3.5 h-3.5 rounded-full bg-emerald-400 inline-block ring-2 ring-emerald-100 dark:ring-emerald-950"></span>
+                                <span>Estável (0-3)</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3.5 h-3.5 rounded-full bg-amber-400 inline-block ring-2 ring-amber-100 dark:ring-amber-950"></span>
+                                <span>Alerta Precoce (4-6)</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3.5 h-3.5 rounded-full bg-rosebrand-500 inline-block ring-2 ring-rosebrand-200 dark:ring-rosebrand-950"></span>
+                                <span>Crise (7-10)</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3.5 h-3.5 rounded-full border-2 border-dashed border-rosebrand-400 inline-block"></span>
+                                <span>Zona de Cuidado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected Day Summary Card (Side Inspector on Calendar Page) -->
+                <div class="lg:col-span-4 flex flex-col justify-between space-y-4">
+                    <div class="bg-white dark:bg-zinc-900 rounded-3xl p-5 sm:p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-4 mb-4 border-b border-rosebrand-100 dark:border-zinc-800">
+                                <div>
+                                    <span class="text-[11px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">Resumo do Dia</span>
+                                    <h3 id="cal-inspector-date" class="text-lg font-bold text-zinc-900 dark:text-white mt-0.5 capitalize">Selecione um dia</h3>
+                                </div>
+                                <span id="cal-inspector-badge" class="text-xs font-semibold px-3 py-1 rounded-full bg-rosebrand-50 text-rosebrand-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                    Sem dados
+                                </span>
+                            </div>
+
+                            <div id="cal-inspector-body" class="space-y-4 text-xs">
+                                <!-- Populated dynamically when clicking a day -->
+                            </div>
+                        </div>
+
+                        <div class="pt-5 mt-5 border-t border-rosebrand-50 dark:border-zinc-800">
+                            <button onclick="switchPage('checkin')" class="w-full bg-rosebrand-500 hover:bg-rosebrand-600 text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition text-xs uppercase tracking-wider flex items-center justify-center space-x-2">
+                                <span>✏️ Editar / Registrar este Dia</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mini Monthly Counter inside Calendar view -->
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <div class="bg-emerald-50/70 dark:bg-zinc-900 p-3.5 rounded-2xl border border-emerald-200/70 dark:border-zinc-800 text-center">
+                            <p id="stat-green" class="text-xl font-bold text-emerald-700 dark:text-emerald-400">0</p>
+                            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Estáveis</p>
+                        </div>
+                        <div class="bg-amber-50/70 dark:bg-zinc-900 p-3.5 rounded-2xl border border-amber-200/70 dark:border-zinc-800 text-center">
+                            <p id="stat-yellow" class="text-xl font-bold text-amber-700 dark:text-amber-400">0</p>
+                            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Alertas</p>
+                        </div>
+                        <div class="bg-rosebrand-50/80 dark:bg-zinc-900 p-3.5 rounded-2xl border border-rosebrand-200/70 dark:border-zinc-800 text-center">
+                            <p id="stat-red" class="text-xl font-bold text-rosebrand-600 dark:text-rosebrand-400">0</p>
+                            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Crises</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- PAGE 3: CICLO & ALERTAS (INSIGHTS)         -->
+        <!-- ========================================== -->
+        <section id="page-insights" class="hidden page-fade">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Cycle Ring Card (Menstrual-Calendar inspired) -->
+                <div class="lg:col-span-5 bg-gradient-to-br from-rosebrand-50 via-rosebrand-50/40 to-white dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 rounded-3xl p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between relative overflow-hidden">
+                    <div class="flex items-center justify-between z-10">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-rosebrand-600 dark:text-rosebrand-400">Termômetro do Ciclo</span>
+                        <span id="today-date-badge" class="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-800 px-3 py-1 rounded-full border border-rosebrand-100 dark:border-zinc-700">Hoje</span>
+                    </div>
+
+                    <!-- Center Circular Indicator -->
+                    <div class="my-6 flex items-center justify-center z-10">
+                        <div id="status-circle" class="w-48 h-48 rounded-full bg-white dark:bg-zinc-900 border-8 border-rosebrand-200 dark:border-rosebrand-900/60 shadow-inner flex flex-col items-center justify-center text-center p-4 transition-all duration-500 animate-pulse-soft">
+                            <span id="status-emoji" class="text-3xl mb-1">🌸</span>
+                            <p class="text-[11px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-semibold">Risco de Crise</p>
+                            <h2 id="risk-level-text" class="text-xl font-bold text-zinc-800 dark:text-white mt-0.5">Baixo</h2>
+                            <p id="streak-subtext" class="text-xs text-rosebrand-500 dark:text-rosebrand-400 mt-1 font-medium">Fase Estável</p>
+                        </div>
+                    </div>
+
+                    <!-- Alert Prediction Box -->
+                    <div id="prediction-banner" class="z-10 bg-white/90 dark:bg-zinc-800/90 backdrop-blur rounded-2xl p-4 border border-rosebrand-100 dark:border-zinc-700 flex items-start space-x-3">
+                        <div id="prediction-icon" class="w-9 h-9 rounded-xl bg-rosebrand-100 dark:bg-rosebrand-900/40 text-rosebrand-600 dark:text-rosebrand-300 flex items-center justify-center shrink-0 mt-0.5 text-base">
+                            💡
+                        </div>
+                        <div class="text-xs leading-relaxed">
+                            <p id="prediction-title" class="font-bold text-zinc-800 dark:text-zinc-100">Padrão Estável Detectado</p>
+                            <p id="prediction-desc" class="text-zinc-500 dark:text-zinc-400 mt-0.5">Seus últimos registros mostram boa qualidade de sono. Continue mantendo pausas leves.</p>
+                        </div>
+                    </div>
+
+                    <!-- Decorative subtle background circles -->
+                    <div class="w-64 h-64 rounded-full bg-rosebrand-200/20 dark:bg-rosebrand-900/10 absolute -top-16 -right-16 pointer-events-none"></div>
+                    <div class="w-40 h-40 rounded-full bg-rosebrand-300/10 dark:bg-rosebrand-800/10 absolute -bottom-10 -left-10 pointer-events-none"></div>
+                </div>
+
+                <!-- Right Column: Trigger Radar & Self-Care Protocol -->
+                <div class="lg:col-span-7 flex flex-col justify-between space-y-5">
+                    
+                    <!-- Early Warning Radar (Yellow Flags) -->
+                    <div class="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm">
+                        <div class="mb-4">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">Mapeamento Pessoal</span>
+                            <h3 class="text-base font-bold text-zinc-900 dark:text-white mt-0.5">Radar de Sinais Prévios & Gatilhos</h3>
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">Fatores que mais antecederam seus dias de fadiga ou crise neste ciclo</p>
+                        </div>
+
+                        <div id="triggers-bars" class="space-y-4 my-4">
+                            <!-- Dynamically populated progress bars -->
+                        </div>
+
+                        <div class="mt-5 pt-4 border-t border-rosebrand-50 dark:border-zinc-800/80 text-xs text-zinc-500 dark:text-zinc-400">
+                            <span>💡 <strong>Observação clínica:</strong> Notar rigidez matinal somada a névoa mental costuma anteceder crises em 24h a 48h.</span>
+                        </div>
+                    </div>
+
+                    <!-- Actionable Prevention Checklist based on Phase -->
+                    <div class="bg-rosebrand-50/50 dark:bg-zinc-900 rounded-3xl p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm">
+                        <h4 class="text-sm font-bold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span>🌷 Plano de Acolhimento Recomendado para Hoje</span>
+                        </h4>
+                        <div id="care-recommendations" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <!-- Populated dynamically by risk phase -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar for Mobile -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-rosebrand-100 dark:border-zinc-800 px-4 py-2 flex justify-around items-center">
+        <button onclick="switchPage('checkin')" id="nav-mob-checkin" class="flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition">
+            <span class="text-lg">📝</span>
+            <span>Registrar</span>
+        </button>
+        <button onclick="switchPage('calendar')" id="nav-mob-calendar" class="flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition">
+            <span class="text-lg">🗓️</span>
+            <span>Calendário</span>
+        </button>
+        <button onclick="switchPage('insights')" id="nav-mob-insights" class="flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition">
+            <span class="text-lg">🌸</span>
+            <span>Ciclo & Alertas</span>
+        </button>
+    </nav>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-20 md:bottom-6 right-5 z-50 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-3 rounded-2xl shadow-xl transform translate-y-24 opacity-0 transition-all duration-300 text-xs font-semibold flex items-center space-x-2.5 pointer-events-none">
+        <span class="w-6 h-6 rounded-full bg-rosebrand-500 text-white flex items-center justify-center text-xs">✓</span>
+        <span id="toast-text">Registro salvo no calendário!</span>
+    </div>
+
+    <script>
+        // --- State & Storage ---
+        const STORAGE_KEY = 'fibrocare_records_v1';
+        let currentPage = 'checkin'; // 'checkin' | 'calendar' | 'insights'
+        let currentMonthDate = new Date();
+        let selectedDateStr = formatDateKey(new Date());
+        
+        // Form state for currently selected day
+        let currentFormState = {
+            pain: 2,
+            sleep: 'bom',
+            fog: 'claro',
+            triggers: [],
+            notes: ''
+        };
+
+        let records = {};
+
+        // Format Date as YYYY-MM-DD
+        function formatDateKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // Format Date for human reading (e.g., "14 de Outubro")
+        function formatHumanDate(dateStr) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const date = new Date(y, m - 1, d);
+            return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', weekday: 'short' });
+        }
+
+        // Seed realistic demo data so the user immediately sees the menstrual-calendar style visualization
+        function seedInitialDemoData() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const demo = {};
+
+            // Create a realistic cycle pattern across the current month
+            const samplePattern = [
+                { offset: -12, pain: 2, sleep: 'bom', fog: 'claro', triggers: [], notes: 'Caminhada leve, dia produtivo.' },
+                { offset: -11, pain: 1, sleep: 'bom', fog: 'claro', triggers: [], notes: 'Sem dores significativas.' },
+                { offset: -10, pain: 3, sleep: 'bom', fog: 'claro', triggers: ['clima'], notes: 'Frente fria chegando.' },
+                { offset: -9,  pain: 5, sleep: 'leve', fog: 'leve', triggers: ['clima', 'rigidez'], notes: 'Acordei com o corpo pesado e rígido.' },
+                { offset: -8,  pain: 6, sleep: 'insonia', fog: 'intenso', triggers: ['rigidez', 'estresse', 'alodinia'], notes: 'Muita névoa mental e sensibilidade.' },
+                { offset: -7,  pain: 8, sleep: 'insonia', fog: 'intenso', triggers: ['rigidez', 'alodinia'], notes: 'Crise instalada. Dor difusa nos ombros e quadril.' },
+                { offset: -6,  pain: 7, sleep: 'leve', fog: 'intenso', triggers: ['rigidez'], notes: 'Repouso e compressa morna.' },
+                { offset: -5,  pain: 4, sleep: 'leve', fog: 'leve', triggers: [], notes: 'Saindo da crise, ainda com fadiga.' },
+                { offset: -4,  pain: 2, sleep: 'bom', fog: 'claro', triggers: [], notes: 'Recuperada.' },
+                { offset: -3,  pain: 2, sleep: 'bom', fog: 'claro', triggers: [], notes: 'Dia tranquilo.' },
+                { offset: -2,  pain: 4, sleep: 'leve', fog: 'claro', triggers: ['esforco'], notes: 'Exagerei na faxina ontem.' },
+                { offset: -1,  pain: 5, sleep: 'leve', fog: 'leve', triggers: ['rigidez', 'estresse'], notes: 'Alerta amarelo: corpo pedindo pausa.' },
+            ];
+
+            samplePattern.forEach(item => {
+                const d = new Date(year, month, today.getDate() + item.offset);
+                demo[formatDateKey(d)] = {
+                    pain: item.pain,
+                    sleep: item.sleep,
+                    fog: item.fog,
+                    triggers: item.triggers,
+                    notes: item.notes
+                };
+            });
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
+            return demo;
+        }
+
+        // Load data
+        function loadRecords() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    records = JSON.parse(saved);
+                    if (Object.keys(records).length === 0) {
+                        records = seedInitialDemoData();
+                    }
+                } catch (e) {
+                    records = seedInitialDemoData();
+                }
+            } else {
+                records = seedInitialDemoData();
+            }
+        }
+
+        function resetDemoData() {
+            records = seedInitialDemoData();
+            selectDay(formatDateKey(new Date()));
+            renderAll();
+            showToast('Dados de demonstração restaurados!');
+        }
+
+        // Classify a day record into Green (stable), Yellow (warning), Red (crisis)
+        function classifyRecord(rec) {
+            if (!rec) return null;
+            if (rec.pain >= 7 || (rec.pain >= 6 && rec.fog === 'intenso')) {
+                return 'red';
+            }
+            if (rec.pain >= 4 || rec.sleep === 'insonia' || rec.fog === 'intenso' || (rec.triggers && rec.triggers.length >= 2)) {
+                return 'yellow';
+            }
+            return 'green';
+        }
+
+        // Check if a future/today date is in a "Predictive Care Zone" (after 2+ yellow/red days)
+        function isPredictiveWarningDay(dateKey) {
+            if (records[dateKey]) return false; // Already logged
+            const [y, m, d] = dateKey.split('-').map(Number);
+            const targetDate = new Date(y, m - 1, d);
+            
+            const prev1 = formatDateKey(new Date(y, m - 1, d - 1));
+            const prev2 = formatDateKey(new Date(y, m - 1, d - 2));
+
+            const c1 = classifyRecord(records[prev1]);
+            const c2 = classifyRecord(records[prev2]);
+
+            // If previous day was yellow/red, highlight next unlogged day as care zone
+            const todayKey = formatDateKey(new Date());
+            if (dateKey >= todayKey && (c1 === 'yellow' || c1 === 'red') && (c2 === 'yellow' || c2 === 'red')) {
+                return true;
+            }
+            return false;
+        }
+
+        // --- Theme Toggle ---
+        function toggleTheme() {
+            const root = document.documentElement;
+            if (root.classList.contains('dark')) {
+                root.classList.remove('dark');
+                localStorage.setItem('fibro_theme', 'light');
+            } else {
+                root.classList.add('dark');
+                localStorage.setItem('fibro_theme', 'dark');
+            }
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('fibro_theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // --- Multi-Page Navigation ---
+        function switchPage(pageId) {
+            currentPage = pageId;
+            const pages = ['checkin', 'calendar', 'insights'];
+            
+            pages.forEach(p => {
+                const section = document.getElementById(`page-${p}`);
+                const deskBtn = document.getElementById(`nav-desk-${p}`);
+                const mobBtn = document.getElementById(`nav-mob-${p}`);
+
+                if (p === pageId) {
+                    section.classList.remove('hidden');
+                    if (deskBtn) {
+                        deskBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-rosebrand-500 text-white shadow-sm';
+                    }
+                    if (mobBtn) {
+                        mobBtn.className = 'flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-xs font-bold transition text-rosebrand-600 dark:text-rosebrand-400 bg-rosebrand-50/80 dark:bg-zinc-900';
+                    }
+                } else {
+                    section.classList.add('hidden');
+                    if (deskBtn) {
+                        deskBtn.className = 'px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-2 text-zinc-600 dark:text-zinc-400 hover:text-rosebrand-600 dark:hover:text-rosebrand-300';
+                    }
+                    if (mobBtn) {
+                        mobBtn.className = 'flex-1 py-1.5 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-xs font-medium transition text-zinc-400 dark:text-zinc-500';
+                    }
+                }
+            });
+
+            renderAll();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function shiftSelectedDay(offsetDays) {
+            const [y, m, d] = selectedDateStr.split('-').map(Number);
+            const nextDate = new Date(y, m - 1, d + offsetDays);
+            currentMonthDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), 1);
+            selectDay(formatDateKey(nextDate));
+        }
+
+        function selectToday() {
+            const today = new Date();
+            currentMonthDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            selectDay(formatDateKey(today));
+        }
+
+        function saveAndGoToCalendar() {
+            currentFormState.notes = document.getElementById('form-notes').value.trim();
+            records[selectedDateStr] = { ...currentFormState };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            selectDay(selectedDateStr);
+            showToast('Registro salvo! Abrindo calendário...');
+            switchPage('calendar');
+        }
+
+        // --- Calendar Navigation & Rendering ---
+        function navigateMonth(direction) {
+            currentMonthDate.setMonth(currentMonthDate.getMonth() + direction);
+            renderAll();
+        }
+
+        function goToCurrentMonth() {
+            currentMonthDate = new Date();
+            selectDay(formatDateKey(new Date()));
+            renderAll();
+        }
+
+        function renderCalendar() {
+            const year = currentMonthDate.getFullYear();
+            const month = currentMonthDate.getMonth();
+
+            const monthTitle = currentMonthDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            document.getElementById('month-title').textContent = monthTitle;
+
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayKey = formatDateKey(new Date());
+
+            const grid = document.getElementById('calendar-cells');
+            grid.innerHTML = '';
+
+            // Empty cells before 1st of month
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'h-14 sm:h-20 rounded-2xl bg-transparent';
+                grid.appendChild(empty);
+            }
+
+            let greenCount = 0;
+            let yellowCount = 0;
+            let redCount = 0;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cellDate = new Date(year, month, day);
+                const dateKey = formatDateKey(cellDate);
+                const rec = records[dateKey];
+                const status = classifyRecord(rec);
+                const isSelected = dateKey === selectedDateStr;
+                const isToday = dateKey === todayKey;
+                const isPredicted = isPredictiveWarningDay(dateKey);
+
+                if (status === 'green') greenCount++;
+                if (status === 'yellow') yellowCount++;
+                if (status === 'red') redCount++;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => selectDay(dateKey);
+
+                // Base styling
+                let bgClass = 'bg-white dark:bg-zinc-800/70 hover:bg-rosebrand-50 dark:hover:bg-zinc-800 border-rosebrand-100/80 dark:border-zinc-800';
+                let dotHtml = '';
+
+                if (status === 'green') {
+                    bgClass = 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100/60';
+                    dotHtml = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>`;
+                } else if (status === 'yellow') {
+                    bgClass = 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 hover:bg-amber-100/60';
+                    dotHtml = `<span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>`;
+                } else if (status === 'red') {
+                    bgClass = 'bg-rosebrand-100/80 dark:bg-rosebrand-950/50 border-rosebrand-300 dark:border-rosebrand-800 hover:bg-rosebrand-200/60';
+                    dotHtml = `<span class="w-2.5 h-2.5 rounded-full bg-rosebrand-500 animate-pulse"></span>`;
+                } else if (isPredicted) {
+                    bgClass = 'bg-rosebrand-50/40 dark:bg-zinc-800/40 border-2 border-dashed border-rosebrand-300 dark:border-rosebrand-700';
+                    dotHtml = `<span class="text-[10px]" title="Dia sugerido para descanso preventivo">🌸</span>`;
+                }
+
+                const ringClass = isSelected
+                    ? 'ring-2 ring-rosebrand-500 dark:ring-rosebrand-400 scale-[1.02] shadow-md z-10'
+                    : '';
+
+                btn.className = `h-14 sm:h-20 p-1.5 sm:p-2.5 rounded-2xl border transition-all flex flex-col justify-between items-start relative text-left ${bgClass} ${ringClass}`;
+
+                // Top row: Day number + status dot
+                const dayBadgeClass = isToday
+                    ? 'w-6 h-6 rounded-full bg-rosebrand-500 text-white font-bold flex items-center justify-center text-xs'
+                    : 'text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-200';
+
+                // Bottom row: Icons & Pain score
+                let bottomInfo = '';
+                if (rec) {
+                    const icons = [];
+                    if (rec.fog === 'intenso' || rec.fog === 'leve') icons.push('🌫️');
+                    if (rec.sleep === 'insonia') icons.push('⚡');
+                    if (rec.triggers && rec.triggers.includes('rigidez')) icons.push('🦴');
+
+                    bottomInfo = `
+                        <div class="w-full flex items-center justify-between text-[10px] sm:text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                            <span class="truncate">${icons.slice(0, 2).join('')}</span>
+                            <span class="font-bold text-[10px] px-1.5 py-0.5 rounded-md bg-white/80 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300">${rec.pain}</span>
+                        </div>
+                    `;
+                } else if (isPredicted) {
+                    bottomInfo = `<span class="text-[10px] text-rosebrand-500 dark:text-rosebrand-400 font-medium leading-tight hidden sm:inline">Cuidado</span>`;
+                }
+
+                btn.innerHTML = `
+                    <div class="w-full flex items-center justify-between">
+                        <span class="${dayBadgeClass}">${day}</span>
+                        ${dotHtml}
+                    </div>
+                    ${bottomInfo}
+                `;
+
+                grid.appendChild(btn);
+            }
+
+            // Update Monthly Counters
+            document.getElementById('stat-green').textContent = greenCount;
+            document.getElementById('stat-yellow').textContent = yellowCount;
+            document.getElementById('stat-red').textContent = redCount;
+
+            renderCalendarInspector();
+        }
+
+        function renderCalendarInspector() {
+            const dateTitle = document.getElementById('cal-inspector-date');
+            const badge = document.getElementById('cal-inspector-badge');
+            const body = document.getElementById('cal-inspector-body');
+            if (!dateTitle || !body) return;
+
+            dateTitle.textContent = formatHumanDate(selectedDateStr);
+            const rec = records[selectedDateStr];
+
+            const triggerLabels = {
+                rigidez: '🦴 Rigidez matinal',
+                alodinia: '🪶 Dor ao toque/luz',
+                estresse: '🧠 Pico de estresse',
+                clima: '🌧️ Mudança de clima',
+                esforco: '🏃‍♀️ Esforço físico'
+            };
+
+            if (!rec) {
+                badge.textContent = 'Sem registro';
+                badge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-rosebrand-50 text-rosebrand-600 dark:bg-zinc-800 dark:text-zinc-400';
+                body.innerHTML = `
+                    <div class="py-8 text-center text-zinc-400 dark:text-zinc-500">
+                        <p class="text-2xl mb-2">📝</p>
+                        <p class="font-medium text-zinc-600 dark:text-zinc-300">Nenhum sintoma registrado neste dia.</p>
+                        <p class="text-[11px] mt-1">Clique no botão abaixo para preencher os dados deste dia.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const st = classifyRecord(rec);
+            if (st === 'green') {
+                badge.textContent = '🟢 Estável';
+                badge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+            } else if (st === 'yellow') {
+                badge.textContent = '🟡 Alerta';
+                badge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+            } else {
+                badge.textContent = '🔴 Crise';
+                badge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-rosebrand-100 text-rosebrand-700 dark:bg-rosebrand-950 dark:text-rosebrand-300';
+            }
+
+            const sleepMap = { bom: '🛌 Reparador', leve: '🥱 Cansado', insonia: '⚡ Insônia' };
+            const fogMap = { claro: '✨ Foco Normal', leve: '🌫️ Distraído', intenso: '🌪️ Intenso' };
+
+            const pillsHtml = (rec.triggers && rec.triggers.length > 0)
+                ? rec.triggers.map(t => `<span class="px-2.5 py-1 rounded-full bg-rosebrand-50 dark:bg-zinc-800 text-rosebrand-700 dark:text-rosebrand-300 border border-rosebrand-200 dark:border-zinc-700 text-[11px] font-medium">${triggerLabels[t] || t}</span>`).join('')
+                : `<span class="text-zinc-400">Nenhum gatilho marcado</span>`;
+
+            body.innerHTML = `
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="p-2.5 rounded-2xl bg-rosebrand-50/50 dark:bg-zinc-800/60 border border-rosebrand-100 dark:border-zinc-800">
+                        <span class="text-[10px] uppercase text-zinc-400 block">Dor</span>
+                        <span class="text-sm font-bold text-zinc-800 dark:text-white">${rec.pain}/10</span>
+                    </div>
+                    <div class="p-2.5 rounded-2xl bg-rosebrand-50/50 dark:bg-zinc-800/60 border border-rosebrand-100 dark:border-zinc-800">
+                        <span class="text-[10px] uppercase text-zinc-400 block">Sono</span>
+                        <span class="text-xs font-bold text-zinc-800 dark:text-white">${sleepMap[rec.sleep] || rec.sleep}</span>
+                    </div>
+                    <div class="p-2.5 rounded-2xl bg-rosebrand-50/50 dark:bg-zinc-800/60 border border-rosebrand-100 dark:border-zinc-800">
+                        <span class="text-[10px] uppercase text-zinc-400 block">Mente</span>
+                        <span class="text-xs font-bold text-zinc-800 dark:text-white">${fogMap[rec.fog] || rec.fog}</span>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold uppercase text-zinc-400 block mb-1.5">Sinais & Gatilhos</span>
+                    <div class="flex flex-wrap gap-1.5">${pillsHtml}</div>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Anotações</span>
+                    <p class="p-3 rounded-2xl bg-rosebrand-50/30 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-300 italic">${rec.notes ? rec.notes : 'Sem anotações adicionais.'}</p>
+                </div>
+            `;
+        }
+
+        // --- Predictive Risk & Trigger Radar ---
+        function renderCyclePredictionAndRadar() {
+            const today = new Date();
+            document.getElementById('today-date-badge').textContent = today.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+
+            // Look at last 3 days up to today
+            const recentStatuses = [];
+            for (let i = 0; i <= 3; i++) {
+                const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+                const r = records[formatDateKey(d)];
+                if (r) recentStatuses.push({ status: classifyRecord(r), rec: r });
+            }
+
+            const circle = document.getElementById('status-circle');
+            const emoji = document.getElementById('status-emoji');
+            const riskText = document.getElementById('risk-level-text');
+            const subtext = document.getElementById('streak-subtext');
+            const predTitle = document.getElementById('prediction-title');
+            const predDesc = document.getElementById('prediction-desc');
+            const predIcon = document.getElementById('prediction-icon');
+
+            // Mini status banner on Page 1 (Check-in)
+            const miniIcon = document.getElementById('mini-status-icon');
+            const miniBadge = document.getElementById('mini-risk-badge');
+            const miniDesc = document.getElementById('mini-status-desc');
+            const careContainer = document.getElementById('care-recommendations');
+
+            const yellowOrRedCount = recentStatuses.filter(x => x.status === 'yellow' || x.status === 'red').length;
+            const latest = recentStatuses[0];
+
+            if (latest && latest.status === 'red') {
+                circle.className = 'w-48 h-48 rounded-full bg-rosebrand-50 dark:bg-zinc-900 border-8 border-rosebrand-400 dark:border-rosebrand-600 shadow-inner flex flex-col items-center justify-center text-center p-4 transition-all duration-500 animate-pulse-soft';
+                emoji.textContent = '🌺';
+                riskText.textContent = 'Fase de Crise';
+                subtext.textContent = 'Priorize Acolhimento';
+                predIcon.textContent = '🫂';
+                predTitle.textContent = 'Momento de Reduzir Estímulos';
+                predDesc.textContent = 'Você está enfrentando um pico de dor. Evite cobranças, reduza luz/ruído e respeite o tempo de recuperação do seu sistema nervoso.';
+
+                miniIcon.textContent = '🌺';
+                miniBadge.textContent = 'Fase de Crise';
+                miniBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-rosebrand-100 text-rosebrand-700 dark:bg-rosebrand-950 dark:text-rosebrand-300';
+                miniDesc.textContent = 'Priorize repouso, baixa luminosidade e acolhimento hoje.';
+
+                careContainer.innerHTML = `
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">🛁 <strong>Calor local:</strong> Banho morno ou bolsa térmica nos pontos de tensão.</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">🕶️ <strong>Redução sensorial:</strong> Diminua luzes brancas e ruídos intensos (modo escuro ativo).</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">🫁 <strong>Respiração lenta:</strong> Ajuda a reduzir a hiperatividade do sistema nervoso central.</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">💬 <strong>Sem culpa:</strong> Adie tarefas pesadas; seu corpo precisa poupar energia.</div>
+                `;
+            } else if (yellowOrRedCount >= 2 || (latest && latest.status === 'yellow')) {
+                circle.className = 'w-48 h-48 rounded-full bg-amber-50/40 dark:bg-zinc-900 border-8 border-amber-300 dark:border-amber-600/80 shadow-inner flex flex-col items-center justify-center text-center p-4 transition-all duration-500 animate-pulse-soft';
+                emoji.textContent = '🌼';
+                riskText.textContent = 'Alerta Moderado';
+                subtext.textContent = 'Sinais Prévios Ativos';
+                predIcon.textContent = '⚠️';
+                predTitle.textContent = 'Possível Crise nas Próximas 48h';
+                predDesc.textContent = 'Notamos acúmulo de fadiga, sono não reparador ou rigidez recente. Desacelere hoje para evitar que a dor escale.';
+
+                miniIcon.textContent = '🌼';
+                miniBadge.textContent = 'Alerta Precoce';
+                miniBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+                miniDesc.textContent = 'Sinais amarelos recentes detectados. Pegue leve hoje!';
+
+                careContainer.innerHTML = `
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">⏸️ <strong>Regra dos 50%:</strong> Faça apenas metade do esforço físico que planejava hoje.</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">🌙 <strong>Higiene do sono:</strong> Desconecte-se de telas 1h antes de deitar para tentar sono profundo.</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">🧘‍♀️ <strong>Alongamento suave:</strong> Movimentos leves sem forçar articulações rígidas.</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">💧 <strong>Pausas cognitivas:</strong> Se notar fibrofog, anote lembretes e faça pausas de 10 min.</div>
+                `;
+            } else {
+                circle.className = 'w-48 h-48 rounded-full bg-white dark:bg-zinc-900 border-8 border-emerald-300 dark:border-emerald-700/70 shadow-inner flex flex-col items-center justify-center text-center p-4 transition-all duration-500 animate-pulse-soft';
+                emoji.textContent = '🌸';
+                riskText.textContent = 'Baixo Risco';
+                subtext.textContent = 'Fase Estável';
+                predIcon.textContent = '✨';
+                predTitle.textContent = 'Janela de Estabilidade';
+                predDesc.textContent = 'Seus indicadores recentes estão equilibrados. Ótimo período para movimento leve de baixo impacto, respeitando seus limites.';
+
+                miniIcon.textContent = '🌸';
+                miniBadge.textContent = 'Ciclo Estável';
+                miniBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+                miniDesc.textContent = 'Seus últimos dias estão equilibrados. Registre como está hoje!';
+
+                careContainer.innerHTML = `
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">🚶‍♀️ <strong>Movimento leve:</strong> Caminhada tranquila, hidroginástica ou pilates adaptado.</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">⚖️ <strong>Pacing (Ritmo):</strong> Mesmo sem dor, evite exagerar para não gerar efeito rebote amanhã.</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">☀️ <strong>Rotina restauradora:</strong> Mantenha horários regulares de sono e hidratação.</div>
+                    <div class="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700">📓 <strong>Constância:</strong> Continue registrando seus dias verdes para conhecer sua linha de base.</div>
+                `;
+            }
+
+            // Compute Trigger Frequencies across all records
+            const triggerMeta = {
+                rigidez: { label: '🦴 Rigidez matinal prolongada', count: 0 },
+                estresse: { label: '🧠 Sobrecarga emocional / Estresse', count: 0 },
+                clima: { label: '🌧️ Oscilação brusca de temperatura', count: 0 },
+                alodinia: { label: '🪶 Sensibilidade ao toque / Luz', count: 0 },
+                esforco: { label: '🏃‍♀️ Excesso de esforço físico prévio', count: 0 }
+            };
+
+            let totalLogs = 0;
+            Object.values(records).forEach(r => {
+                totalLogs++;
+                if (r.triggers) {
+                    r.triggers.forEach(t => {
+                        if (triggerMeta[t]) triggerMeta[t].count++;
+                    });
+                }
+            });
+
+            const sortedTriggers = Object.values(triggerMeta).sort((a, b) => b.count - a.count).slice(0, 3);
+            const barsContainer = document.getElementById('triggers-bars');
+            barsContainer.innerHTML = '';
+
+            sortedTriggers.forEach(item => {
+                const pct = totalLogs > 0 ? Math.min(100, Math.round((item.count / Math.max(1, totalLogs)) * 100)) : 0;
+                barsContainer.innerHTML += `
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="font-medium text-zinc-700 dark:text-zinc-300">${item.label}</span>
+                            <span class="font-bold text-rosebrand-600 dark:text-rosebrand-400">${item.count}x no ciclo</span>
+                        </div>
+                        <div class="w-full h-2 bg-rosebrand-100/70 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-rosebrand-300 to-rosebrand-500 rounded-full transition-all duration-500" style="width: ${Math.max(pct, 8)}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- Day Selection & Right Panel Form ---
+        function selectDay(dateKey) {
+            selectedDateStr = dateKey;
+            const todayKey = formatDateKey(new Date());
+            const isToday = dateKey === todayKey;
+
+            document.getElementById('panel-date-title').textContent = isToday
+                ? `Hoje, ${formatHumanDate(dateKey)}`
+                : formatHumanDate(dateKey);
+
+            const jumpTodayBtn = document.getElementById('btn-jump-today');
+            if (jumpTodayBtn) {
+                if (isToday) jumpTodayBtn.classList.add('hidden');
+                else jumpTodayBtn.classList.remove('hidden');
+            }
+
+            const existing = records[dateKey];
+            const statusPill = document.getElementById('panel-status-pill');
+            const deleteBtn = document.getElementById('btn-delete-day');
+
+            if (existing) {
+                currentFormState = {
+                    pain: existing.pain ?? 2,
+                    sleep: existing.sleep || 'bom',
+                    fog: existing.fog || 'claro',
+                    triggers: [...(existing.triggers || [])],
+                    notes: existing.notes || ''
+                };
+                const st = classifyRecord(existing);
+                if (st === 'green') {
+                    statusPill.textContent = '🟢 Dia Estável';
+                    statusPill.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+                } else if (st === 'yellow') {
+                    statusPill.textContent = '🟡 Alerta Precoce';
+                    statusPill.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+                } else {
+                    statusPill.textContent = '🔴 Dia de Crise';
+                    statusPill.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-rosebrand-100 text-rosebrand-700 dark:bg-rosebrand-950 dark:text-rosebrand-300';
+                }
+                deleteBtn.classList.remove('hidden');
+            } else {
+                currentFormState = {
+                    pain: 2,
+                    sleep: 'bom',
+                    fog: 'claro',
+                    triggers: [],
+                    notes: ''
+                };
+                statusPill.textContent = 'Novo Registro';
+                statusPill.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-rosebrand-50 text-rosebrand-600 dark:bg-zinc-800 dark:text-zinc-400';
+                deleteBtn.classList.add('hidden');
+            }
+
+            syncFormUI();
+            renderCalendar();
+        }
+
+        function updatePainUI(val) {
+            const num = Number(val);
+            currentFormState.pain = num;
+            const badge = document.getElementById('pain-badge');
+            badge.textContent = `${num} / 10`;
+
+            if (num <= 3) {
+                badge.className = 'text-sm font-extrabold px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+            } else if (num <= 6) {
+                badge.className = 'text-sm font-extrabold px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+            } else {
+                badge.className = 'text-sm font-extrabold px-2.5 py-0.5 rounded-lg bg-rosebrand-100 text-rosebrand-700 dark:bg-rosebrand-950 dark:text-rosebrand-300';
+            }
+        }
+
+        function selectOption(group, value) {
+            currentFormState[group] = value;
+            syncFormUI();
+        }
+
+        function toggleTrigger(triggerKey) {
+            const idx = currentFormState.triggers.indexOf(triggerKey);
+            if (idx >= 0) {
+                currentFormState.triggers.splice(idx, 1);
+            } else {
+                currentFormState.triggers.push(triggerKey);
+            }
+            syncFormUI();
+        }
+
+        function syncFormUI() {
+            document.getElementById('form-pain').value = currentFormState.pain;
+            updatePainUI(currentFormState.pain);
+            document.getElementById('form-notes').value = currentFormState.notes;
+
+            // Sleep buttons
+            ['bom', 'leve', 'insonia'].forEach(opt => {
+                const btn = document.getElementById(`btn-sleep-${opt}`);
+                if (currentFormState.sleep === opt) {
+                    btn.className = 'sleep-btn py-2 px-2 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition bg-rosebrand-100 border-rosebrand-400 text-rosebrand-800 dark:bg-rosebrand-950/80 dark:border-rosebrand-500 dark:text-rosebrand-200 shadow-sm';
+                } else {
+                    btn.className = 'sleep-btn py-2 px-2 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition bg-rosebrand-50/30 border-rosebrand-100 text-zinc-600 hover:bg-rosebrand-50 dark:bg-zinc-800/50 dark:border-zinc-700 dark:text-zinc-400';
+                }
+            });
+
+            // Fog buttons
+            ['claro', 'leve', 'intenso'].forEach(opt => {
+                const btn = document.getElementById(`btn-fog-${opt}`);
+                if (currentFormState.fog === opt) {
+                    btn.className = 'fog-btn py-2 px-2 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition bg-rosebrand-100 border-rosebrand-400 text-rosebrand-800 dark:bg-rosebrand-950/80 dark:border-rosebrand-500 dark:text-rosebrand-200 shadow-sm';
+                } else {
+                    btn.className = 'fog-btn py-2 px-2 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition bg-rosebrand-50/30 border-rosebrand-100 text-zinc-600 hover:bg-rosebrand-50 dark:bg-zinc-800/50 dark:border-zinc-700 dark:text-zinc-400';
+                }
+            });
+
+            // Trigger pills
+            document.querySelectorAll('.trigger-pill').forEach(pill => {
+                const key = pill.getAttribute('data-trigger');
+                if (currentFormState.triggers.includes(key)) {
+                    pill.className = 'trigger-pill px-3 py-1.5 rounded-full text-xs font-semibold border transition bg-rosebrand-500 border-rosebrand-500 text-white shadow-sm';
+                } else {
+                    pill.className = 'trigger-pill px-3 py-1.5 rounded-full text-xs font-medium border transition bg-rosebrand-50/50 border-rosebrand-200 text-zinc-700 hover:bg-rosebrand-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300';
+                }
+            });
+        }
+
+        function saveDayRecord(e) {
+            e.preventDefault();
+            currentFormState.notes = document.getElementById('form-notes').value.trim();
+            records[selectedDateStr] = { ...currentFormState };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+
+            selectDay(selectedDateStr);
+            renderAll();
+            showToast('Registro atualizado com sucesso!');
+        }
+
+        function deleteSelectedDay() {
+            if (records[selectedDateStr]) {
+                delete records[selectedDateStr];
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                selectDay(selectedDateStr);
+                renderAll();
+                showToast('Registro removido.');
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').textContent = msg;
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 2600);
+        }
+
+        function renderAll() {
+            renderCalendar();
+            renderCyclePredictionAndRadar();
+        }
+
+        // Initialize App on Load
+        window.onload = function () {
+            initTheme();
+            loadRecords();
+            selectDay(selectedDateStr);
+            switchPage('checkin');
+        };
+    </script>
+</body>
+</html>
