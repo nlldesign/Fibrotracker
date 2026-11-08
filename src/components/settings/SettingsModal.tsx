@@ -122,11 +122,11 @@ export const SettingsModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
       onClick={() => setSettingsModalOpen(false)}
     >
       <div
-        className="bg-white dark:bg-zinc-900 w-full max-w-xl rounded-3xl p-6 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl relative my-8 space-y-6"
+        className="bg-white dark:bg-zinc-900 w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl relative space-y-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}

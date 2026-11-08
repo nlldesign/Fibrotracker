@@ -298,98 +298,107 @@ export const ReportsPage: React.FC = () => {
         id="clinical-sheet-content"
         className="bg-white dark:bg-zinc-900 rounded-3xl p-5 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-sm space-y-5 print:border-none print:shadow-none print:p-0"
       >
-        {/* Patient & Doctor Identification Header */}
-        <div className="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-rosebrand-100 dark:border-zinc-800">
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white">
+        {/* Patient & Doctor Identification Header (Full-Width Mobile-First Layout) */}
+        <div className="space-y-3 pb-4 border-b border-rosebrand-100 dark:border-zinc-800">
+          {/* Top Row: Title, Date Pill & Action Buttons */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div className="space-y-1.5">
+              <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white leading-snug">
                 Laudo de Acompanhamento Diário — Fibromialgia
               </h3>
-              <span className="text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap bg-rosebrand-100 text-rosebrand-800 dark:bg-rosebrand-950/90 dark:text-rosebrand-200 dark:border dark:border-rosebrand-800/60">
-                {report.startKey} a {report.endKey} ({report.totalLoggedDays} registros)
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-600 dark:text-zinc-300">
-              <span>
-                Paciente:{' '}
-                <strong className="text-zinc-900 dark:text-white">
-                  {patientMeta.patientName || user?.fullName || user?.email || 'Não informado'}
-                </strong>
-              </span>
-              <span>•</span>
-              <span>
-                Médico(a) Assistente:{' '}
-                <strong className="text-zinc-900 dark:text-white">
-                  {patientMeta.doctorName || 'Reumatologia / Clínica da Dor'}
-                </strong>
-              </span>
-            </div>
-
-            {/* Medications & Exams Clinical Context Box */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs">
-              <div className="p-3 rounded-2xl bg-rosebrand-50/40 dark:bg-zinc-800/60 border border-rosebrand-100 dark:border-zinc-800">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-600 dark:text-rosebrand-400 flex items-center gap-1">
-                    <Pill className="w-3.5 h-3.5 shrink-0" />
-                    <span>Medicações & Frequência de Uso</span>
-                  </span>
-                </div>
-                {validMedications.length > 0 ? (
-                  <ul className="space-y-1 text-zinc-700 dark:text-zinc-200">
-                    {validMedications.map((m) => (
-                      <li key={m.id} className="flex items-baseline justify-between gap-2">
-                        <strong className="font-semibold">{m.name || 'Medicação'}</strong>
-                        {m.frequency && (
-                          <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                            {m.frequency}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : patientMeta.continuousMedications ? (
-                  <p className="text-zinc-700 dark:text-zinc-200">
-                    {patientMeta.continuousMedications}
-                  </p>
-                ) : (
-                  <p className="text-zinc-400 italic">Nenhuma medicação cadastrada</p>
-                )}
-              </div>
-
-              <div className="p-3 rounded-2xl bg-rosebrand-50/40 dark:bg-zinc-800/60 border border-rosebrand-100 dark:border-zinc-800">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-600 dark:text-rosebrand-400 flex items-center gap-1 mb-1">
-                  <Stethoscope className="w-3.5 h-3.5 shrink-0" />
-                  <span>Exames Complementares Recentes</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold px-3 py-1 rounded-full whitespace-nowrap bg-rosebrand-100 text-rosebrand-800 dark:bg-rosebrand-950/90 dark:text-rosebrand-200 dark:border dark:border-rosebrand-800/60">
+                  {report.startKey} a {report.endKey} ({report.totalLoggedDays} registros)
                 </span>
-                {patientMeta.clinicalExams ? (
-                  <p className="text-zinc-700 dark:text-zinc-200 whitespace-pre-line leading-relaxed">
-                    {patientMeta.clinicalExams}
-                  </p>
-                ) : (
-                  <p className="text-zinc-400 italic">Nenhum exame informado</p>
-                )}
               </div>
+            </div>
+
+            <div
+              className="print:hidden flex items-center gap-2 w-full sm:w-auto shrink-0"
+              data-pdf-hide="true"
+            >
+              <button
+                type="button"
+                onClick={openClinicalModal}
+                className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl bg-rosebrand-50 dark:bg-zinc-800 hover:bg-rosebrand-100 dark:hover:bg-zinc-700 text-xs font-bold text-rosebrand-600 dark:text-rosebrand-300 border border-rosebrand-200 dark:border-zinc-700 transition flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <Plus className="w-3.5 h-3.5 shrink-0" />
+                <span>Editar Exames / Remédios</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSettingsModalOpen(true)}
+                className="p-2 rounded-xl bg-rosebrand-50 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-white border border-rosebrand-100 dark:border-zinc-700 transition shrink-0"
+                title="Configurações"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          <div className="print:hidden flex items-center gap-2 shrink-0" data-pdf-hide="true">
-            <button
-              type="button"
-              onClick={openClinicalModal}
-              className="px-3 py-1.5 rounded-xl bg-rosebrand-50 dark:bg-zinc-800 hover:bg-rosebrand-100 dark:hover:bg-zinc-700 text-xs font-bold text-rosebrand-600 dark:text-rosebrand-300 border border-rosebrand-200 dark:border-zinc-700 transition flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Editar Exames / Remédios</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSettingsModalOpen(true)}
-              className="p-2 rounded-xl bg-rosebrand-50 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-white border border-rosebrand-100 dark:border-zinc-700 transition"
-              title="Configurações"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
+          {/* Second Row: Patient & Assistant Doctor Info (100% Width) */}
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-y-1 gap-x-3 text-xs text-zinc-600 dark:text-zinc-300">
+            <div>
+              Paciente:{' '}
+              <strong className="text-zinc-900 dark:text-white">
+                {patientMeta.patientName || user?.fullName || user?.email || 'Não informado'}
+              </strong>
+            </div>
+            <span className="hidden sm:inline text-zinc-400">•</span>
+            <div>
+              Médico(a) Assistente:{' '}
+              <strong className="text-zinc-900 dark:text-white">
+                {patientMeta.doctorName || 'Reumatologia / Clínica da Dor'}
+              </strong>
+            </div>
+          </div>
+
+          {/* Third Row: Medications & Exams Clinical Context Box (100% Width Grid) */}
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+            <div className="w-full p-3.5 rounded-2xl bg-rosebrand-50/40 dark:bg-zinc-800/60 border border-rosebrand-100 dark:border-zinc-800">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Pill className="w-3.5 h-3.5 text-rosebrand-500 dark:text-rosebrand-400 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-600 dark:text-rosebrand-400">
+                  Medicações & Frequência de Uso
+                </span>
+              </div>
+              {validMedications.length > 0 ? (
+                <ul className="space-y-1 text-zinc-700 dark:text-zinc-200">
+                  {validMedications.map((m) => (
+                    <li key={m.id} className="flex items-baseline justify-between gap-2">
+                      <strong className="font-semibold">{m.name || 'Medicação'}</strong>
+                      {m.frequency && (
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                          {m.frequency}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : patientMeta.continuousMedications ? (
+                <p className="text-zinc-700 dark:text-zinc-200">
+                  {patientMeta.continuousMedications}
+                </p>
+              ) : (
+                <p className="text-zinc-400 italic">Nenhuma medicação cadastrada</p>
+              )}
+            </div>
+
+            <div className="w-full p-3.5 rounded-2xl bg-rosebrand-50/40 dark:bg-zinc-800/60 border border-rosebrand-100 dark:border-zinc-800">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Stethoscope className="w-3.5 h-3.5 text-rosebrand-500 dark:text-rosebrand-400 shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-600 dark:text-rosebrand-400">
+                  Exames Complementares Recentes
+                </span>
+              </div>
+              {patientMeta.clinicalExams ? (
+                <p className="text-zinc-700 dark:text-zinc-200 whitespace-pre-line leading-relaxed">
+                  {patientMeta.clinicalExams}
+                </p>
+              ) : (
+                <p className="text-zinc-400 italic">Nenhum exame informado</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -696,11 +705,11 @@ export const ReportsPage: React.FC = () => {
       {/* Modal de Preenchimento: Exames, Dados do Paciente & Lista Dinâmica "+ Remédios" */}
       {isClinicalModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
           onClick={() => setIsClinicalModalOpen(false)}
         >
           <div
-            className="bg-white dark:bg-zinc-900 w-full max-w-xl rounded-3xl p-6 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl space-y-5 my-8"
+            className="bg-white dark:bg-zinc-900 w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
