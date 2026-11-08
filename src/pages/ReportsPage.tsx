@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useFibroStore } from '../store/useFibroStore';
 import {
+  formatDateKey,
   formatHumanDate,
   generateClinicalReport,
   getTopBodyZones,
@@ -12,21 +13,37 @@ export const ReportsPage: React.FC = () => {
   const {
     records,
     user,
-    setAuthModalOpen,
+    setSettingsModalOpen,
     patientMeta,
     updatePatientMeta,
+    reportDaysFilter,
+    reportCustomRange,
+    setReportDaysFilter,
+    setReportCustomRange,
     showToast,
   } = useFibroStore();
 
-  const [daysFilter, setDaysFilter] = useState<number>(30);
   const [editingHeader, setEditingHeader] = useState(false);
 
-  const report = generateClinicalReport(records, daysFilter);
+  const todayStr = formatDateKey(new Date());
+  const defaultStartDate = new Date();
+  defaultStartDate.setDate(defaultStartDate.getDate() - 29);
+
+  const [customStart, setCustomStart] = useState(
+    reportCustomRange?.startDate || formatDateKey(defaultStartDate)
+  );
+  const [customEnd, setCustomEnd] = useState(reportCustomRange?.endDate || todayStr);
+
+  const report = generateClinicalReport(records, reportDaysFilter, reportCustomRange);
   const topZones = getTopBodyZones(records, 6);
   const topTriggers = getTopTriggers(records, 4);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleApplyCustomRange = () => {
+    setReportCustomRange({ startDate: customStart, endDate: customEnd });
   };
 
   const handleExportCsv = () => {
@@ -67,7 +84,7 @@ export const ReportsPage: React.FC = () => {
     link.setAttribute('href', encodedUri);
     link.setAttribute(
       'download',
-      `relatorio_fibrocare_${new Date().toISOString().slice(0, 10)}.csv`
+      `relatorio_fibrocare_${report.startKey}_a_${report.endKey}.csv`
     );
     document.body.appendChild(link);
     link.click();
@@ -78,85 +95,101 @@ export const ReportsPage: React.FC = () => {
   return (
     <section className="page-fade">
       {/* Top Action Bar (Hidden when printing) */}
-      <div className="print:hidden mb-6 bg-gradient-to-r from-rosebrand-50 via-white to-rosebrand-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900 rounded-3xl p-5 border border-rosebrand-100 dark:border-zinc-800 shadow-sm flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">
-            Acompanhamento Médico & Exportação
-          </span>
-          <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white mt-0.5">
-            Relatório Clínico de Evolução (Padrão ACR)
-          </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Resumo consolidado de dor, bateria de energia, medicação SOS e critérios WPI/SSS para
-            consultas.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Period Filter */}
-          <div className="inline-flex bg-rosebrand-50 dark:bg-zinc-800 p-1 rounded-2xl border border-rosebrand-100 dark:border-zinc-700">
-            {[
-              { days: 7, label: '7 dias (ACR)' },
-              { days: 30, label: '30 dias' },
-              { days: 90, label: '90 dias' },
-            ].map((p) => (
-              <button
-                key={p.days}
-                type="button"
-                onClick={() => setDaysFilter(p.days)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                  daysFilter === p.days
-                    ? 'bg-rosebrand-500 text-white shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-rosebrand-600'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+      <div className="print:hidden mb-6 bg-gradient-to-r from-rosebrand-50 via-white to-rosebrand-50/40 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900 rounded-3xl p-5 border border-rosebrand-100 dark:border-zinc-800 shadow-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">
+              Acompanhamento Médico & Exportação
+            </span>
+            <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white mt-0.5">
+              Relatório Clínico de Evolução (Padrão ACR)
+            </h2>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Período selecionado: <strong>{report.startKey}</strong> até{' '}
+              <strong>{report.endKey}</strong> ({report.totalLoggedDays} registros)
+            </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="px-3.5 py-2.5 rounded-2xl bg-white dark:bg-zinc-800 hover:bg-rosebrand-50 dark:hover:bg-zinc-700 text-rosebrand-700 dark:text-rosebrand-300 border border-rosebrand-200 dark:border-zinc-700 text-xs font-bold transition"
-          >
-            📥 Baixar CSV
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Period Filter */}
+            <div className="inline-flex bg-rosebrand-50 dark:bg-zinc-800 p-1 rounded-2xl border border-rosebrand-100 dark:border-zinc-700">
+              {[
+                { days: 7, label: '7 dias (ACR)' },
+                { days: 30, label: '30 dias' },
+                { days: 90, label: '90 dias' },
+              ].map((p) => (
+                <button
+                  key={p.days}
+                  type="button"
+                  onClick={() => setReportDaysFilter(p.days)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    !reportCustomRange && reportDaysFilter === p.days
+                      ? 'bg-rosebrand-500 text-white shadow-sm'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-rosebrand-600'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
 
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="px-3.5 py-2.5 rounded-2xl bg-white dark:bg-zinc-800 hover:bg-rosebrand-50 dark:hover:bg-zinc-700 text-rosebrand-700 dark:text-rosebrand-300 border border-rosebrand-200 dark:border-zinc-700 text-xs font-bold transition"
+            >
+              📥 Baixar CSV
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="px-4 py-2.5 rounded-2xl bg-rosebrand-500 hover:bg-rosebrand-600 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+            >
+              <span>🖨️ Imprimir / Salvar PDF</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Custom Date Range Bar */}
+        <div className="pt-3 border-t border-rosebrand-100/70 dark:border-zinc-800 flex flex-wrap items-center gap-2.5 text-xs">
+          <span className="font-bold text-zinc-600 dark:text-zinc-300">
+            📅 Filtrar por Período Específico:
+          </span>
+          <input
+            type="date"
+            value={customStart}
+            max={customEnd}
+            onChange={(e) => setCustomStart(e.target.value)}
+            className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700"
+          />
+          <span className="text-zinc-400">até</span>
+          <input
+            type="date"
+            value={customEnd}
+            min={customStart}
+            max={todayStr}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700"
+          />
           <button
             type="button"
-            onClick={handlePrint}
-            className="px-4 py-2.5 rounded-2xl bg-rosebrand-500 hover:bg-rosebrand-600 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+            onClick={handleApplyCustomRange}
+            className="px-3 py-1.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold transition"
           >
-            <span>🖨️ Imprimir / Salvar PDF</span>
+            Aplicar Período
           </button>
+          {reportCustomRange && (
+            <button
+              type="button"
+              onClick={() => setReportDaysFilter(30)}
+              className="text-rosebrand-600 dark:text-rosebrand-400 underline font-semibold"
+            >
+              Limpar filtro personalizado
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Cloud Sync Banner if not logged in (Hidden when printing) */}
-      {!user && (
-        <div className="print:hidden mb-6 p-4 rounded-2xl bg-amber-50/70 dark:bg-zinc-900 border border-amber-200/80 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">☁️</span>
-            <div className="text-xs">
-              <p className="font-bold text-zinc-800 dark:text-zinc-100">
-                Seus dados estão salvos apenas neste navegador
-              </p>
-              <p className="text-zinc-600 dark:text-zinc-400">
-                Conecte sua conta ao Supabase para ter histórico vitalício em nuvem e acessar de
-                qualquer aparelho.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setAuthModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold transition"
-          >
-            Conectar Conta / Nuvem
-          </button>
-        </div>
-      )}
 
       {/* Printable Clinical Sheet */}
       <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-rosebrand-100 dark:border-zinc-800 shadow-sm space-y-6 print:border-none print:shadow-none print:p-0">
@@ -168,7 +201,7 @@ export const ReportsPage: React.FC = () => {
                 Laudo de Acompanhamento Diário — Fibromialgia
               </h3>
               <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rosebrand-100 text-rosebrand-700 dark:bg-rosebrand-950 dark:text-rosebrand-300">
-                Últimos {daysFilter} dias ({report.totalLoggedDays} registros)
+                {report.startKey} a {report.endKey} ({report.totalLoggedDays} registros)
               </span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
@@ -189,13 +222,22 @@ export const ReportsPage: React.FC = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setEditingHeader(!editingHeader)}
-            className="print:hidden text-xs font-bold text-rosebrand-600 dark:text-rosebrand-400 underline"
-          >
-            {editingHeader ? 'Fechar Edição' : '✏️ Editar Cabeçalho do Paciente'}
-          </button>
+          <div className="print:hidden flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setEditingHeader(!editingHeader)}
+              className="text-xs font-bold text-rosebrand-600 dark:text-rosebrand-400 underline"
+            >
+              {editingHeader ? 'Fechar Edição' : '✏️ Editar Cabeçalho'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSettingsModalOpen(true)}
+              className="text-xs font-bold text-zinc-500 hover:text-zinc-800 dark:hover:text-white underline"
+            >
+              ⚙️ Configurações
+            </button>
+          </div>
         </div>
 
         {/* Editable Patient Meta Box */}

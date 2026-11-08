@@ -10,8 +10,7 @@ const NAV_ITEMS: { id: PageId; icon: string; label: string }[] = [
 ];
 
 export const Header: React.FC = () => {
-  const { currentPage, setPage, resetDemoData, toggleTheme, user, setAuthModalOpen } =
-    useFibroStore();
+  const { currentPage, setPage, toggleTheme, user, setSettingsModalOpen } = useFibroStore();
 
   return (
     <header className="print:hidden sticky top-0 z-40 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border-b border-rosebrand-100 dark:border-zinc-800/80 transition-colors">
@@ -69,34 +68,21 @@ export const Header: React.FC = () => {
 
         {/* Actions */}
         <div className="flex items-center space-x-2">
-          {/* Cloud / Supabase Account Button */}
+          {/* Settings & Export Report Button */}
           <button
             type="button"
-            onClick={() => setAuthModalOpen(true)}
-            title="Conta & Sincronização Supabase"
-            className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${
-              user
-                ? 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                : 'bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-rosebrand-700 dark:text-rosebrand-300 border-rosebrand-100 dark:border-zinc-800'
-            }`}
+            onClick={() => setSettingsModalOpen(true)}
+            title="Configurações e Exportar Relatório Médico"
+            className="px-3 py-2 rounded-xl text-xs font-bold bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-rosebrand-700 dark:text-rosebrand-300 border border-rosebrand-100 dark:border-zinc-800 transition flex items-center gap-1.5"
           >
-            <span>☁️</span>
-            <span className="hidden sm:inline">{user ? 'Sincronizado' : 'Conta / Nuvem'}</span>
-          </button>
-
-          <button
-            onClick={resetDemoData}
-            title="Restaurar dados de exemplo"
-            className="p-2.5 rounded-xl bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-rosebrand-600 dark:text-zinc-400 border border-rosebrand-100 dark:border-zinc-800 transition"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            <span>⚙️</span>
+            <span className="hidden sm:inline">Configurações</span>
+            {user && (
+              <span
+                className="w-2 h-2 rounded-full bg-emerald-400"
+                title={`Conectado: ${user.email}`}
               />
-            </svg>
+            )}
           </button>
 
           {/* Dark Mode Toggle */}

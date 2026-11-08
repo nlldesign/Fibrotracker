@@ -161,20 +161,25 @@ export function getTopBodyZones(records: RecordsMap, topN = 4) {
 
 /**
  * Calcula os indicadores clínicos ACR 2016 (WPI 0-19 e SSS 0-12) e estatísticas
- * para o período selecionado (ex: últimos 7, 30 ou 90 dias).
+ * para o período selecionado (por número de dias ou intervalo de datas customStart..customEnd).
  */
-export function generateClinicalReport(records: RecordsMap, daysFilter: number) {
+export function generateClinicalReport(
+  records: RecordsMap,
+  daysFilter: number,
+  customRange?: { startDate: string; endDate: string } | null
+) {
   const today = new Date();
   const cutoffDate = new Date(
     today.getFullYear(),
     today.getMonth(),
     today.getDate() - daysFilter + 1
   );
-  const cutoffKey = formatDateKey(cutoffDate);
-  const todayKey = formatDateKey(today);
+
+  const startKey = customRange?.startDate || formatDateKey(cutoffDate);
+  const endKey = customRange?.endDate || formatDateKey(today);
 
   const filteredEntries = Object.entries(records)
-    .filter(([dateKey]) => dateKey >= cutoffKey && dateKey <= todayKey)
+    .filter(([dateKey]) => dateKey >= startKey && dateKey <= endKey)
     .sort(([a], [b]) => a.localeCompare(b));
 
   const totalLoggedDays = filteredEntries.length;
@@ -182,6 +187,8 @@ export function generateClinicalReport(records: RecordsMap, daysFilter: number) 
   if (totalLoggedDays === 0) {
     return {
       daysFilter,
+      startKey,
+      endKey,
       totalLoggedDays: 0,
       avgPain: 0,
       avgSpoons: 0,
@@ -234,7 +241,7 @@ export function generateClinicalReport(records: RecordsMap, daysFilter: number) 
     return { dateKey, rec, status };
   });
 
-  // ACR WPI & SSS Calculation (based on last 7 logged days or period)
+  // ACR WPI & SSS Calculation (based on last 7 logged days in range)
   const last7Entries = entries.slice(-7);
   const uniqueZonesSet = new Set<BodyZoneId>();
   last7Entries.forEach(({ rec }) => {
@@ -293,6 +300,8 @@ export function generateClinicalReport(records: RecordsMap, daysFilter: number) 
 
   return {
     daysFilter,
+    startKey,
+    endKey,
     totalLoggedDays,
     avgPain: Number((sumPain / totalLoggedDays).toFixed(1)),
     avgSpoons: Number((sumSpoons / totalLoggedDays).toFixed(1)),

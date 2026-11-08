@@ -3,7 +3,8 @@ import { useFibroStore } from './store/useFibroStore';
 import { Header } from './components/layout/Header';
 import { BottomNav } from './components/layout/BottomNav';
 import { Toast } from './components/layout/Toast';
-import { AuthModal } from './components/auth/AuthModal';
+import { WelcomeAuthPage } from './components/auth/WelcomeAuthPage';
+import { SettingsModal } from './components/settings/SettingsModal';
 import { CheckinPage } from './pages/CheckinPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { InsightsPage } from './pages/InsightsPage';
@@ -11,7 +12,16 @@ import { ReportsPage } from './pages/ReportsPage';
 import { getSupabaseClient } from './lib/supabaseClient';
 
 export const App: React.FC = () => {
-  const { currentPage, theme, setUser, syncWithCloud } = useFibroStore();
+  const {
+    currentPage,
+    theme,
+    user,
+    authChecked,
+    guestAccessAllowed,
+    setUser,
+    setAuthChecked,
+    syncWithCloud,
+  } = useFibroStore();
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -21,10 +31,13 @@ export const App: React.FC = () => {
     }
   }, [theme]);
 
-  // Restore Supabase Auth session automatically if configured
+  // Restore Supabase Auth session automatically
   useEffect(() => {
     const supabase = getSupabaseClient();
-    if (!supabase) return;
+    if (!supabase) {
+      setAuthChecked(true);
+      return;
+    }
 
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
@@ -35,6 +48,7 @@ export const App: React.FC = () => {
         });
         syncWithCloud();
       }
+      setAuthChecked(true);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -47,12 +61,38 @@ export const App: React.FC = () => {
       } else {
         setUser(null);
       }
+      setAuthChecked(true);
     });
 
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, [setUser, syncWithCloud]);
+  }, [setUser, setAuthChecked, syncWithCloud]);
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-rosebrand-50/40 dark:bg-zinc-950">
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-2xl bg-rosebrand-500 text-white flex items-center justify-center text-2xl mx-auto animate-pulse">
+            🌸
+          </div>
+          <p className="text-xs font-bold text-rosebrand-600 dark:text-rosebrand-400">
+            Carregando seu Diário FibroCare...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // First Screen Gate: Ask user to create account / login before continuing
+  if (!user && !guestAccessAllowed) {
+    return (
+      <>
+        <WelcomeAuthPage />
+        <Toast />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-24 md:pb-10">
@@ -64,7 +104,7 @@ export const App: React.FC = () => {
         {currentPage === 'reports' && <ReportsPage />}
       </main>
       <BottomNav />
-      <AuthModal />
+      <SettingsModal />
       <Toast />
     </div>
   );

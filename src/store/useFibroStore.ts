@@ -18,6 +18,11 @@ interface PatientLocalMeta {
   continuousMedications: string;
 }
 
+export interface CustomReportRange {
+  startDate: string;
+  endDate: string;
+}
+
 function loadPatientMeta(): PatientLocalMeta {
   try {
     const saved = localStorage.getItem(PATIENT_META_KEY);
@@ -68,12 +73,18 @@ interface FibroStore {
   theme: 'light' | 'dark';
   toastMessage: string | null;
 
-  // Auth & Cloud Sync State
+  // Auth, Onboarding Gate & Settings State
   user: UserProfile | null;
-  isAuthModalOpen: boolean;
+  authChecked: boolean;
+  guestAccessAllowed: boolean;
+  isSettingsModalOpen: boolean;
   isSyncing: boolean;
   lastSyncedAt: string | null;
   patientMeta: PatientLocalMeta;
+
+  // Report Period Filter State
+  reportDaysFilter: number;
+  reportCustomRange: CustomReportRange | null;
 
   setPage: (page: PageId) => void;
   selectDay: (dateKey: string) => void;
@@ -88,12 +99,19 @@ interface FibroStore {
   toggleTheme: () => void;
   showToast: (msg: string) => void;
 
-  // Auth & Cloud Actions
-  setAuthModalOpen: (open: boolean) => void;
+  // Auth & Settings Actions
+  setSettingsModalOpen: (open: boolean) => void;
   setUser: (user: UserProfile | null) => void;
+  setAuthChecked: (checked: boolean) => void;
+  setGuestAccessAllowed: (allowed: boolean) => void;
   syncWithCloud: () => Promise<void>;
   signOut: () => Promise<void>;
   updatePatientMeta: (meta: Partial<PatientLocalMeta>) => void;
+
+  // Report Actions
+  setReportDaysFilter: (days: number) => void;
+  setReportCustomRange: (range: CustomReportRange | null) => void;
+  openReportForPeriod: (days: number, customRange?: CustomReportRange | null) => void;
 }
 
 export const useFibroStore = create<FibroStore>((set, get) => ({
@@ -105,10 +123,15 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
   toastMessage: null,
 
   user: null,
-  isAuthModalOpen: false,
+  authChecked: false,
+  guestAccessAllowed: false,
+  isSettingsModalOpen: false,
   isSyncing: false,
   lastSyncedAt: null,
   patientMeta: loadPatientMeta(),
+
+  reportDaysFilter: 30,
+  reportCustomRange: null,
 
   setPage: (page) => {
     set({ currentPage: page });
@@ -167,7 +190,12 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     if (user?.id) {
       upsertSingleRecordToSupabase(user.id, dateKey, record).then(({ error }) => {
         if (!error) {
-          set({ lastSyncedAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) });
+          set({
+            lastSyncedAt: new Date().toLocaleTimeString('pt-BR', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          });
         }
       });
     }
@@ -217,9 +245,10 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     }, 2800);
   },
 
-  setAuthModalOpen: (open) => set({ isAuthModalOpen: open }),
-
+  setSettingsModalOpen: (open) => set({ isSettingsModalOpen: open }),
   setUser: (user) => set({ user }),
+  setAuthChecked: (checked) => set({ authChecked: checked }),
+  setGuestAccessAllowed: (allowed) => set({ guestAccessAllowed: allowed }),
 
   syncWithCloud: async () => {
     const { user, records, showToast } = get();
@@ -253,13 +282,26 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     if (supabase) {
       await supabase.auth.signOut();
     }
-    set({ user: null, lastSyncedAt: null });
-    get().showToast('Sessão encerrada (dados locais mantidos).');
+    set({ user: null, lastSyncedAt: null, guestAccessAllowed: false, isSettingsModalOpen: false });
+    get().showToast('Sessão encerrada.');
   },
 
   updatePatientMeta: (meta) => {
     const next = { ...get().patientMeta, ...meta };
     localStorage.setItem(PATIENT_META_KEY, JSON.stringify(next));
     set({ patientMeta: next });
+  },
+
+  setReportDaysFilter: (days) => set({ reportDaysFilter: days, reportCustomRange: null }),
+  setReportCustomRange: (range) => set({ reportCustomRange: range }),
+
+  openReportForPeriod: (days, customRange = null) => {
+    set({
+      reportDaysFilter: days,
+      reportCustomRange: customRange,
+      currentPage: 'reports',
+      isSettingsModalOpen: false,
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 }));
