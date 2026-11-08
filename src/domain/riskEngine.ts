@@ -201,7 +201,13 @@ export function generateClinicalReport(
       sssScore: 0,
       meetsAcrThreshold: false,
       uniqueZones7d: [] as BodyZoneId[],
-      topQualities: [] as { key: PainQualityKey; label: string; emoji: string; count: number }[],
+      topQualities: [] as {
+        key: PainQualityKey;
+        shortLabel: string;
+        label: string;
+        emoji: string;
+        count: number;
+      }[],
       topReliefs: [] as { key: ReliefActionKey; label: string; emoji: string; count: number }[],
       entries: [] as { dateKey: string; rec: DailyRecord; status: CycleStatus }[],
     };

@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { DailyRecord, PageId, RecordsMap, UserProfile } from '../types/record';
+import {
+  CheckinMode,
+  DailyRecord,
+  MedicationItem,
+  PageId,
+  RecordsMap,
+  UserProfile,
+} from '../types/record';
 import { formatDateKey } from '../domain/riskEngine';
 import {
   deleteSingleRecordFromSupabase,
@@ -11,6 +18,7 @@ import { getSupabaseClient } from '../lib/supabaseClient';
 const STORAGE_KEY = 'fibrocare_records_v2';
 const THEME_KEY = 'fibro_theme';
 const PATIENT_META_KEY = 'fibrocare_patient_meta_v2';
+const CHECKIN_MODE_KEY = 'fibro_checkin_default_mode';
 
 // Clean up legacy demo localStorage keys so app starts completely empty
 try {
@@ -20,10 +28,12 @@ try {
   // ignore
 }
 
-interface PatientLocalMeta {
+export interface PatientLocalMeta {
   patientName: string;
   doctorName: string;
   continuousMedications: string;
+  medicationsList: MedicationItem[];
+  clinicalExams: string;
 }
 
 export interface CustomReportRange {
@@ -34,7 +44,16 @@ export interface CustomReportRange {
 function loadPatientMeta(): PatientLocalMeta {
   try {
     const saved = localStorage.getItem(PATIENT_META_KEY);
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        patientName: parsed.patientName || '',
+        doctorName: parsed.doctorName || '',
+        continuousMedications: parsed.continuousMedications || '',
+        medicationsList: Array.isArray(parsed.medicationsList) ? parsed.medicationsList : [],
+        clinicalExams: parsed.clinicalExams || '',
+      };
+    }
   } catch {
     // ignore
   }
@@ -42,7 +61,19 @@ function loadPatientMeta(): PatientLocalMeta {
     patientName: '',
     doctorName: '',
     continuousMedications: '',
+    medicationsList: [],
+    clinicalExams: '',
   };
+}
+
+function loadInitialCheckinMode(): CheckinMode {
+  try {
+    const saved = localStorage.getItem(CHECKIN_MODE_KEY);
+    if (saved === 'advanced' || saved === 'simple') return saved;
+  } catch {
+    // ignore
+  }
+  return 'simple';
 }
 
 function loadInitialRecords(): RecordsMap {
@@ -79,6 +110,10 @@ interface FibroStore {
   theme: 'light' | 'dark';
   toastMessage: string | null;
 
+  // Check-in Mode Preferences
+  checkinDefaultMode: CheckinMode;
+  checkinActiveMode: CheckinMode;
+
   // Auth & Settings State
   user: UserProfile | null;
   authChecked: boolean;
@@ -97,6 +132,9 @@ interface FibroStore {
   selectToday: () => void;
   navigateMonth: (direction: number) => void;
   goToCurrentMonth: () => void;
+
+  setCheckinDefaultMode: (mode: CheckinMode) => void;
+  setCheckinActiveMode: (mode: CheckinMode) => void;
 
   saveRecord: (dateKey: string, record: DailyRecord) => void;
   deleteRecord: (dateKey: string) => void;
@@ -117,6 +155,8 @@ interface FibroStore {
   openReportForPeriod: (days: number, customRange?: CustomReportRange | null) => void;
 }
 
+const initialCheckinMode = loadInitialCheckinMode();
+
 export const useFibroStore = create<FibroStore>((set, get) => ({
   currentPage: 'checkin',
   selectedDateStr: formatDateKey(new Date()),
@@ -124,6 +164,9 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
   records: loadInitialRecords(),
   theme: loadInitialTheme(),
   toastMessage: null,
+
+  checkinDefaultMode: initialCheckinMode,
+  checkinActiveMode: initialCheckinMode,
 
   user: null,
   authChecked: false,
@@ -136,7 +179,10 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
   reportCustomRange: null,
 
   setPage: (page) => {
-    set({ currentPage: page });
+    set((state) => ({
+      currentPage: page,
+      checkinActiveMode: page === 'checkin' ? state.checkinDefaultMode : state.checkinActiveMode,
+    }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
@@ -178,6 +224,15 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
       currentMonthDate: new Date(today.getFullYear(), today.getMonth(), 1),
       selectedDateStr: formatDateKey(today),
     });
+  },
+
+  setCheckinDefaultMode: (mode) => {
+    localStorage.setItem(CHECKIN_MODE_KEY, mode);
+    set({ checkinDefaultMode: mode, checkinActiveMode: mode });
+  },
+
+  setCheckinActiveMode: (mode) => {
+    set({ checkinActiveMode: mode });
   },
 
   saveRecord: (dateKey, record) => {
@@ -271,7 +326,13 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     set({
       user: null,
       records: {},
-      patientMeta: { patientName: '', doctorName: '', continuousMedications: '' },
+      patientMeta: {
+        patientName: '',
+        doctorName: '',
+        continuousMedications: '',
+        medicationsList: [],
+        clinicalExams: '',
+      },
       lastSyncedAt: null,
       isSettingsModalOpen: false,
     });

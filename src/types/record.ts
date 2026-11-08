@@ -1,5 +1,6 @@
 export type SleepQuality = 'bom' | 'leve' | 'insonia';
 export type FogLevel = 'claro' | 'leve' | 'intenso';
+export type CheckinMode = 'simple' | 'advanced';
 
 export type TriggerKey =
   | 'rigidez'
@@ -60,6 +61,12 @@ export interface DailyRecord {
 }
 
 export type RecordsMap = Record<string, DailyRecord>;
+
+export interface MedicationItem {
+  id: string;
+  name: string;
+  frequency: string;
+}
 
 export interface UserProfile {
   id: string;

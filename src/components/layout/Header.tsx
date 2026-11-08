@@ -1,12 +1,22 @@
 import React from 'react';
 import { useFibroStore } from '../../store/useFibroStore';
 import { PageId } from '../../types/record';
+import {
+  BarChart3,
+  CalendarDays,
+  Flower2,
+  Heart,
+  Moon,
+  PenLine,
+  Settings,
+  Sun,
+} from '../common/ClinicalIcons';
 
-const NAV_ITEMS: { id: PageId; icon: string; label: string }[] = [
-  { id: 'checkin', icon: '📝', label: '1. Registrar' },
-  { id: 'calendar', icon: '🗓️', label: '2. Calendário' },
-  { id: 'insights', icon: '🌸', label: '3. Ciclo & Alertas' },
-  { id: 'reports', icon: '📊', label: '4. Relatório Médico' },
+const NAV_ITEMS: { id: PageId; label: string; Icon: React.FC<{ className?: string }> }[] = [
+  { id: 'checkin', label: '1. Registrar', Icon: PenLine },
+  { id: 'calendar', label: '2. Calendário', Icon: CalendarDays },
+  { id: 'insights', label: '3. Ciclo & Alertas', Icon: Flower2 },
+  { id: 'reports', label: '4. Relatório Médico', Icon: BarChart3 },
 ];
 
 export const Header: React.FC = () => {
@@ -20,22 +30,15 @@ export const Header: React.FC = () => {
           className="flex items-center space-x-3 cursor-pointer shrink-0"
           onClick={() => setPage('checkin')}
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rosebrand-300 to-rosebrand-400 dark:from-rosebrand-600 dark:to-rosebrand-500 flex items-center justify-center text-white shadow-sm shadow-rosebrand-200 dark:shadow-none">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
-            </svg>
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rosebrand-400 to-rosebrand-500 dark:from-rosebrand-600 dark:to-rosebrand-500 flex items-center justify-center text-white shadow-sm shadow-rosebrand-200 dark:shadow-none">
+            <Heart className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
                 FibroCare
               </h1>
-              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rosebrand-100 text-rosebrand-700 dark:bg-rosebrand-900/50 dark:text-rosebrand-300 hidden sm:inline-block">
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rosebrand-100 text-rosebrand-700 dark:bg-rosebrand-950 dark:text-rosebrand-200 dark:border dark:border-rosebrand-800/60 hidden sm:inline-block whitespace-nowrap">
                 Diário Cíclico
               </span>
             </div>
@@ -49,6 +52,7 @@ export const Header: React.FC = () => {
         <nav className="hidden md:flex items-center bg-rosebrand-50/70 dark:bg-zinc-900 p-1 rounded-2xl border border-rosebrand-100 dark:border-zinc-800">
           {NAV_ITEMS.map((item) => {
             const active = currentPage === item.id;
+            const Icon = item.Icon;
             return (
               <button
                 key={item.id}
@@ -59,7 +63,7 @@ export const Header: React.FC = () => {
                     : 'px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 text-zinc-600 dark:text-zinc-400 hover:text-rosebrand-600 dark:hover:text-rosebrand-300'
                 }
               >
-                <span>{item.icon}</span>
+                <Icon className="w-4 h-4 shrink-0" />
                 <span>{item.label}</span>
               </button>
             );
@@ -72,10 +76,10 @@ export const Header: React.FC = () => {
           <button
             type="button"
             onClick={() => setSettingsModalOpen(true)}
-            title="Configurações e Exportar Relatório Médico"
-            className="px-3 py-2 rounded-xl text-xs font-bold bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-rosebrand-700 dark:text-rosebrand-300 border border-rosebrand-100 dark:border-zinc-800 transition flex items-center gap-1.5"
+            title="Configurações e Preferências"
+            className="p-2.5 sm:px-3 sm:py-2 rounded-xl text-xs font-bold bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-rosebrand-700 dark:text-rosebrand-200 border border-rosebrand-100 dark:border-zinc-800 transition flex items-center gap-1.5"
           >
-            <span>⚙️</span>
+            <Settings className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">Configurações</span>
           </button>
 
@@ -85,32 +89,8 @@ export const Header: React.FC = () => {
             className="p-2.5 rounded-xl bg-rosebrand-50 hover:bg-rosebrand-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-rosebrand-600 dark:text-amber-400 border border-rosebrand-100 dark:border-zinc-800 transition"
             aria-label="Alternar Tema"
           >
-            <svg
-              className="w-5 h-5 hidden dark:block"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-            <svg
-              className="w-5 h-5 block dark:hidden"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-              />
-            </svg>
+            <Sun className="w-4 h-4 hidden dark:block" />
+            <Moon className="w-4 h-4 block dark:hidden" />
           </button>
         </div>
       </div>

@@ -10,6 +10,7 @@ import { CalendarPage } from './pages/CalendarPage';
 import { InsightsPage } from './pages/InsightsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { getSupabaseClient } from './lib/supabaseClient';
+import { Flower2 } from './components/common/ClinicalIcons';
 
 export const App: React.FC = () => {
   const { currentPage, theme, user, authChecked, setUser, setAuthChecked, syncWithCloud } =
@@ -65,8 +66,8 @@ export const App: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-rosebrand-50/40 dark:bg-zinc-950">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-rosebrand-500 text-white flex items-center justify-center text-2xl mx-auto animate-pulse">
-            🌸
+          <div className="w-12 h-12 rounded-2xl bg-rosebrand-500 text-white flex items-center justify-center mx-auto animate-pulse">
+            <Flower2 className="w-6 h-6" />
           </div>
           <p className="text-xs font-bold text-rosebrand-600 dark:text-rosebrand-400">
             Carregando seu Diário FibroCare...

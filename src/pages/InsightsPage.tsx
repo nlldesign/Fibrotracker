@@ -6,6 +6,12 @@ import {
   getTopTriggers,
 } from '../domain/riskEngine';
 import { CARE_PROTOCOLS } from '../constants/clinicalData';
+import {
+  ClinicalIcon,
+  Compass,
+  Flower2,
+  Sparkles,
+} from '../components/common/ClinicalIcons';
 
 export const InsightsPage: React.FC = () => {
   const { records } = useFibroStore();
@@ -27,8 +33,15 @@ export const InsightsPage: React.FC = () => {
       ? 'bg-amber-50/40 dark:bg-zinc-900 border-amber-300 dark:border-amber-600/80'
       : 'bg-white dark:bg-zinc-900 border-emerald-300 dark:border-emerald-700/70';
 
+  const circleIconColor =
+    phase === 'red'
+      ? 'text-rosebrand-500 dark:text-rosebrand-400'
+      : phase === 'yellow'
+      ? 'text-amber-500 dark:text-amber-400'
+      : 'text-emerald-500 dark:text-emerald-400';
+
   return (
-    <section className="page-fade">
+    <section className="page-fade pb-6">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Cycle Ring Card */}
         <div className="lg:col-span-5 bg-gradient-to-br from-rosebrand-50 via-rosebrand-50/40 to-white dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 rounded-3xl p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between relative overflow-hidden">
@@ -36,7 +49,7 @@ export const InsightsPage: React.FC = () => {
             <span className="text-xs font-semibold uppercase tracking-wider text-rosebrand-600 dark:text-rosebrand-400">
               Termômetro do Ciclo
             </span>
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-800 px-3 py-1 rounded-full border border-rosebrand-100 dark:border-zinc-700">
+            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300 bg-white/90 dark:bg-zinc-800 px-3 py-1 rounded-full border border-rosebrand-100 dark:border-zinc-700 whitespace-nowrap">
               {todayBadge}
             </span>
           </div>
@@ -46,8 +59,10 @@ export const InsightsPage: React.FC = () => {
             <div
               className={`w-48 h-48 rounded-full border-8 shadow-inner flex flex-col items-center justify-center text-center p-4 transition-all duration-500 animate-pulse-soft ${circleBorderClass}`}
             >
-              <span className="text-3xl mb-1">{protocol.emoji}</span>
-              <p className="text-[11px] uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-semibold">
+              <div className={`mb-1.5 ${circleIconColor}`}>
+                <ClinicalIcon name={protocol.emoji} className="w-8 h-8" />
+              </div>
+              <p className="text-[11px] uppercase tracking-widest text-zinc-400 dark:text-zinc-400 font-semibold">
                 Risco de Crise
               </p>
               <h2 className="text-xl font-bold text-zinc-800 dark:text-white mt-0.5">
@@ -61,12 +76,12 @@ export const InsightsPage: React.FC = () => {
 
           {/* Alert Prediction Box */}
           <div className="z-10 bg-white/90 dark:bg-zinc-800/90 backdrop-blur rounded-2xl p-4 border border-rosebrand-100 dark:border-zinc-700 flex items-start space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-rosebrand-100 dark:bg-rosebrand-900/40 text-rosebrand-600 dark:text-rosebrand-300 flex items-center justify-center shrink-0 mt-0.5 text-base">
-              {protocol.predIcon}
+            <div className="w-9 h-9 rounded-xl bg-rosebrand-100 dark:bg-rosebrand-950 text-rosebrand-600 dark:text-rosebrand-300 flex items-center justify-center shrink-0 mt-0.5">
+              <ClinicalIcon name={protocol.predIcon} className="w-5 h-5" />
             </div>
             <div className="text-xs leading-relaxed">
               <p className="font-bold text-zinc-800 dark:text-zinc-100">{protocol.predTitle}</p>
-              <p className="text-zinc-500 dark:text-zinc-400 mt-0.5">{protocol.predDesc}</p>
+              <p className="text-zinc-500 dark:text-zinc-300 mt-0.5">{protocol.predDesc}</p>
             </div>
           </div>
 
@@ -78,7 +93,7 @@ export const InsightsPage: React.FC = () => {
         {/* Right Column: Trigger Radar, Body Pain Ranking & Self-Care Protocol */}
         <div className="lg:col-span-7 flex flex-col justify-between space-y-5">
           {/* Early Warning Radar (Yellow Flags) */}
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 sm:p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm">
             <div className="mb-4">
               <span className="text-[11px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-400">
                 Mapeamento Pessoal
@@ -94,11 +109,15 @@ export const InsightsPage: React.FC = () => {
             <div className="space-y-4 my-4">
               {topTriggers.map((item) => (
                 <div key={item.key}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                      {item.radarLabel}
+                  <div className="flex items-center justify-between gap-3 text-xs mb-1.5">
+                    <span className="font-medium text-zinc-700 dark:text-zinc-200 flex items-center gap-2 min-w-0">
+                      <ClinicalIcon
+                        name={item.key}
+                        className="w-4 h-4 text-rosebrand-500 dark:text-rosebrand-400 shrink-0"
+                      />
+                      <span className="leading-snug">{item.radarLabel}</span>
                     </span>
-                    <span className="font-bold text-rosebrand-600 dark:text-rosebrand-400">
+                    <span className="font-bold text-rosebrand-600 dark:text-rosebrand-400 whitespace-nowrap shrink-0">
                       {item.count}x no ciclo
                     </span>
                   </div>
@@ -122,15 +141,15 @@ export const InsightsPage: React.FC = () => {
                   {topBodyZones.map((zone) => (
                     <div
                       key={zone.id}
-                      className="p-2.5 rounded-2xl bg-rosebrand-50/50 dark:bg-zinc-800/70 border border-rosebrand-100 dark:border-zinc-800 flex items-center justify-between"
+                      className="p-2.5 rounded-2xl bg-rosebrand-50/50 dark:bg-zinc-800/70 border border-rosebrand-100 dark:border-zinc-800 flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-base">{zone.emoji}</span>
+                        <Compass className="w-4 h-4 text-rosebrand-500 dark:text-rosebrand-400 shrink-0" />
                         <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">
                           {zone.label}
                         </span>
                       </div>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-zinc-900 text-rosebrand-600 dark:text-rosebrand-400 border border-rosebrand-100 dark:border-zinc-700 shrink-0">
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-zinc-900 text-rosebrand-600 dark:text-rosebrand-300 border border-rosebrand-100 dark:border-zinc-700 shrink-0 whitespace-nowrap">
                         {zone.count}d
                       </span>
                     </div>
@@ -143,26 +162,37 @@ export const InsightsPage: React.FC = () => {
               )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-rosebrand-50 dark:border-zinc-800/80 text-xs text-zinc-500 dark:text-zinc-400">
-              <span>
-                💡 <strong>Observação clínica:</strong> Notar rigidez matinal na cervical/trapézio
-                somada a névoa mental costuma anteceder crises em 24h a 48h.
+            <div className="mt-4 pt-3 border-t border-rosebrand-50 dark:border-zinc-800/80 text-xs text-zinc-500 dark:text-zinc-300">
+              <span className="flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-rosebrand-500 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Observação clínica:</strong> Notar rigidez matinal na cervical/trapézio
+                  somada a névoa mental costuma anteceder crises em 24h a 48h.
+                </span>
               </span>
             </div>
           </div>
 
           {/* Actionable Prevention Checklist based on Phase */}
-          <div className="bg-rosebrand-50/50 dark:bg-zinc-900 rounded-3xl p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm">
+          <div className="bg-rosebrand-50/50 dark:bg-zinc-900 rounded-3xl p-5 sm:p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-sm">
             <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
-              <span>🌷 Plano de Acolhimento Recomendado para Hoje</span>
+              <Flower2 className="w-4 h-4 text-rosebrand-500 shrink-0" />
+              <span>Plano de Acolhimento Recomendado para Hoje</span>
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               {protocol.recommendations.map((rec, i) => (
                 <div
                   key={i}
-                  className="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700"
+                  className="p-3.5 rounded-2xl bg-white dark:bg-zinc-800 border border-rosebrand-100 dark:border-zinc-700 flex items-start gap-2.5"
                 >
-                  {rec.icon} <strong>{rec.title}</strong> {rec.desc}
+                  <ClinicalIcon
+                    name={rec.icon}
+                    className="w-4 h-4 text-rosebrand-500 dark:text-rosebrand-400 shrink-0 mt-0.5"
+                  />
+                  <div>
+                    <strong className="text-zinc-900 dark:text-white">{rec.title}</strong>{' '}
+                    <span className="text-zinc-600 dark:text-zinc-300">{rec.desc}</span>
+                  </div>
                 </div>
               ))}
             </div>
