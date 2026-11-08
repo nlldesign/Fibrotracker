@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useFibroStore } from '../store/useFibroStore';
 import {
   formatDateKey,
@@ -703,165 +704,167 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Modal de Preenchimento: Exames, Dados do Paciente & Lista Dinâmica "+ Remédios" */}
-      {isClinicalModalOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
-          onClick={() => setIsClinicalModalOpen(false)}
-        >
+      {isClinicalModalOpen &&
+        createPortal(
           <div
-            className="bg-white dark:bg-zinc-900 w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl space-y-5"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setIsClinicalModalOpen(false)}
           >
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3 pb-3 border-b border-rosebrand-100 dark:border-zinc-800">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-rosebrand-100 dark:bg-rosebrand-950 text-rosebrand-600 dark:text-rosebrand-300 flex items-center justify-center shrink-0">
-                  <Stethoscope className="w-5 h-5" />
+            <div
+              className="bg-white dark:bg-zinc-900 w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl p-5 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl space-y-5 my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-rosebrand-100 dark:border-zinc-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-rosebrand-100 dark:bg-rosebrand-950 text-rosebrand-600 dark:text-rosebrand-300 flex items-center justify-center shrink-0">
+                    <Stethoscope className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white">
+                      Dados do Laudo, Exames & Medicações
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Preencha seus exames e a frequência dos seus remédios para o relatório médico
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsClinicalModalOpen(false)}
+                  className="p-2 rounded-xl bg-rosebrand-50 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-white shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Patient & Doctor Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="font-bold block mb-1 text-zinc-700 dark:text-zinc-200">
+                    Nome da Paciente *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Ana Paula Silva"
+                    value={patientMeta.patientName}
+                    onChange={(e) => updatePatientMeta({ patientName: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
+                  />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-extrabold text-zinc-900 dark:text-white">
-                    Dados do Laudo, Exames & Medicações
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Preencha seus exames e a frequência dos seus remédios para o relatório médico
-                  </p>
+                  <label className="font-bold block mb-1 text-zinc-700 dark:text-zinc-200">
+                    Médico(a) / Especialidade
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Dr. Roberto (Reumatologista)"
+                    value={patientMeta.doctorName}
+                    onChange={(e) => updatePatientMeta({ doctorName: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
+                  />
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsClinicalModalOpen(false)}
-                className="p-2 rounded-xl bg-rosebrand-50 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
 
-            {/* Patient & Doctor Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="font-bold block mb-1 text-zinc-700 dark:text-zinc-200">
-                  Nome da Paciente *
+              {/* Dynamic Medications List + "+ Remédios" Button */}
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5">
+                    <Pill className="w-4 h-4 text-rosebrand-500" />
+                    <span>Medicações em Uso & Frequência</span>
+                  </label>
+                  <span className="text-[11px] text-zinc-400">
+                    {medicationsList.length}{' '}
+                    {medicationsList.length === 1 ? 'item' : 'itens'}
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {medicationsList.map((med, idx) => (
+                    <div
+                      key={med.id}
+                      className="p-3 rounded-2xl bg-rosebrand-50/40 dark:bg-zinc-800/70 border border-rosebrand-100 dark:border-zinc-700 flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="text-[11px] font-bold text-rosebrand-500 w-5 text-center shrink-0">
+                          #{idx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Remédio e dose (Ex: Pregabalina 75mg)"
+                          value={med.name}
+                          onChange={(e) =>
+                            handleUpdateMedicationRow(med.id, 'name', e.target.value)
+                          }
+                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 sm:w-56">
+                        <input
+                          type="text"
+                          placeholder="Frequência (Ex: 1x à noite)"
+                          value={med.frequency}
+                          onChange={(e) =>
+                            handleUpdateMedicationRow(med.id, 'frequency', e.target.value)
+                          }
+                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMedicationRow(med.id)}
+                          className="p-2 rounded-xl bg-white dark:bg-zinc-900 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 hover:text-rose-600 border border-rosebrand-100 dark:border-zinc-700 transition shrink-0"
+                          title="Remover remédio"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddMedicationRow}
+                  className="w-full py-2.5 px-4 rounded-2xl border-2 border-dashed border-rosebrand-300 dark:border-zinc-700 hover:border-rosebrand-500 dark:hover:border-rosebrand-500 text-rosebrand-600 dark:text-rosebrand-300 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-rosebrand-50/50 dark:hover:bg-zinc-800/60 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Remédios (Adicionar mais um medicamento)</span>
+                </button>
+              </div>
+
+              {/* Clinical Exams Textarea */}
+              <div className="text-xs">
+                <label className="font-bold block mb-1 text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5">
+                  <Stethoscope className="w-4 h-4 text-rosebrand-500" />
+                  <span>Exames Realizados & Resultados Relevantes</span>
                 </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Ana Paula Silva"
-                  value={patientMeta.patientName}
-                  onChange={(e) => updatePatientMeta({ patientName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
+                <textarea
+                  rows={3}
+                  placeholder="Ex: Hemograma, VHS e PCR normais (Out/2026) • Vitamina D: 32 ng/mL • Ressonância cervical sem compressão nervosa..."
+                  value={patientMeta.clinicalExams}
+                  onChange={(e) => updatePatientMeta({ clinicalExams: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-2xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white resize-none"
                 />
               </div>
-              <div>
-                <label className="font-bold block mb-1 text-zinc-700 dark:text-zinc-200">
-                  Médico(a) / Especialidade
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Dr. Roberto (Reumatologista)"
-                  value={patientMeta.doctorName}
-                  onChange={(e) => updatePatientMeta({ doctorName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
-                />
+
+              {/* Save Button */}
+              <div className="pt-2 flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsClinicalModalOpen(false);
+                    showToast('Dados do laudo, exames e medicações salvos!');
+                  }}
+                  className="flex-1 py-3.5 px-5 rounded-2xl bg-rosebrand-500 hover:bg-rosebrand-600 text-white text-xs font-bold uppercase tracking-wider shadow-md transition flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Salvar Dados no Relatório</span>
+                </button>
               </div>
             </div>
-
-            {/* Dynamic Medications List + "+ Remédios" Button */}
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <label className="font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5">
-                  <Pill className="w-4 h-4 text-rosebrand-500" />
-                  <span>Medicações em Uso & Frequência</span>
-                </label>
-                <span className="text-[11px] text-zinc-400">
-                  {medicationsList.length}{' '}
-                  {medicationsList.length === 1 ? 'item' : 'itens'}
-                </span>
-              </div>
-
-              <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-                {medicationsList.map((med, idx) => (
-                  <div
-                    key={med.id}
-                    className="p-3 rounded-2xl bg-rosebrand-50/40 dark:bg-zinc-800/70 border border-rosebrand-100 dark:border-zinc-700 flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <span className="text-[11px] font-bold text-rosebrand-500 w-5 text-center shrink-0">
-                        #{idx + 1}
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Remédio e dose (Ex: Pregabalina 75mg)"
-                        value={med.name}
-                        onChange={(e) =>
-                          handleUpdateMedicationRow(med.id, 'name', e.target.value)
-                        }
-                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 sm:w-56">
-                      <input
-                        type="text"
-                        placeholder="Frequência (Ex: 1x à noite)"
-                        value={med.frequency}
-                        onChange={(e) =>
-                          handleUpdateMedicationRow(med.id, 'frequency', e.target.value)
-                        }
-                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveMedicationRow(med.id)}
-                        className="p-2 rounded-xl bg-white dark:bg-zinc-900 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-zinc-400 hover:text-rose-600 border border-rosebrand-100 dark:border-zinc-700 transition shrink-0"
-                        title="Remover remédio"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleAddMedicationRow}
-                className="w-full py-2.5 px-4 rounded-2xl border-2 border-dashed border-rosebrand-300 dark:border-zinc-700 hover:border-rosebrand-500 dark:hover:border-rosebrand-500 text-rosebrand-600 dark:text-rosebrand-300 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-rosebrand-50/50 dark:hover:bg-zinc-800/60 transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Remédios (Adicionar mais um medicamento)</span>
-              </button>
-            </div>
-
-            {/* Clinical Exams Textarea */}
-            <div className="text-xs">
-              <label className="font-bold block mb-1 text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5">
-                <Stethoscope className="w-4 h-4 text-rosebrand-500" />
-                <span>Exames Realizados & Resultados Relevantes</span>
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Ex: Hemograma, VHS e PCR normais (Out/2026) • Vitamina D: 32 ng/mL • Ressonância cervical sem compressão nervosa..."
-                value={patientMeta.clinicalExams}
-                onChange={(e) => updatePatientMeta({ clinicalExams: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-rosebrand-50/40 dark:bg-zinc-800 border border-rosebrand-200 dark:border-zinc-700 text-zinc-900 dark:text-white resize-none"
-              />
-            </div>
-
-            {/* Save Button */}
-            <div className="pt-2 flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsClinicalModalOpen(false);
-                  showToast('Dados do laudo, exames e medicações salvos!');
-                }}
-                className="flex-1 py-3.5 px-5 rounded-2xl bg-rosebrand-500 hover:bg-rosebrand-600 text-white text-xs font-bold uppercase tracking-wider shadow-md transition flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Salvar Dados no Relatório</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </section>
   );
 };

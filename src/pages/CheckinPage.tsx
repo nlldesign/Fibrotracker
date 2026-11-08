@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useFibroStore } from '../store/useFibroStore';
 import {
   classifyRecord,
@@ -717,72 +718,74 @@ export const CheckinPage: React.FC = () => {
       </div>
 
       {/* Modal Informativo "i": Explicação das Características da Dor */}
-      {isPainInfoModalOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setIsPainInfoModalOpen(false)}
-        >
+      {isPainInfoModalOpen &&
+        createPortal(
           <div
-            className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-3xl p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl space-y-4"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[100] bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setIsPainInfoModalOpen(false)}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-rosebrand-100 dark:bg-rosebrand-950 text-rosebrand-600 dark:text-rosebrand-300 flex items-center justify-center shrink-0">
-                  <Info className="w-5 h-5" />
+            <div
+              className="bg-white dark:bg-zinc-900 w-full max-w-md max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-6 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-rosebrand-100 dark:bg-rosebrand-950 text-rosebrand-600 dark:text-rosebrand-300 flex items-center justify-center shrink-0">
+                    <Info className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-zinc-900 dark:text-white">
+                      Características da Dor
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Entenda o que cada sensação representa na Fibromialgia
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-white">
-                    Características da Dor
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Entenda o que cada sensação representa na Fibromialgia
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPainInfoModalOpen(false)}
+                  className="p-1.5 rounded-xl bg-rosebrand-50 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+                >
+                  ✕
+                </button>
               </div>
+
+              <div className="space-y-3 pt-1">
+                {Object.values(PAIN_QUALITY_METADATA).map((q) => (
+                  <div
+                    key={q.key}
+                    className="p-3.5 rounded-2xl bg-rosebrand-50/50 dark:bg-zinc-800/70 border border-rosebrand-100 dark:border-zinc-700/80 flex items-start gap-3"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-900 border border-rosebrand-100 dark:border-zinc-700 text-rosebrand-500 dark:text-rosebrand-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <ClinicalIcon name={q.key} className="w-4 h-4" />
+                    </div>
+                    <div className="text-xs leading-relaxed">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-zinc-900 dark:text-white">
+                          {q.shortLabel}
+                        </span>
+                        <span className="text-[10px] font-semibold text-rosebrand-600 dark:text-rosebrand-400">
+                          ({q.clinicalTitle})
+                        </span>
+                      </div>
+                      <p className="text-zinc-600 dark:text-zinc-300 mt-0.5">{q.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <button
                 type="button"
                 onClick={() => setIsPainInfoModalOpen(false)}
-                className="p-1.5 rounded-xl bg-rosebrand-50 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-white"
+                className="w-full py-3 rounded-2xl bg-rosebrand-500 hover:bg-rosebrand-600 text-white text-xs font-bold uppercase tracking-wider transition"
               >
-                ✕
+                Entendi
               </button>
             </div>
-
-            <div className="space-y-3 pt-1">
-              {Object.values(PAIN_QUALITY_METADATA).map((q) => (
-                <div
-                  key={q.key}
-                  className="p-3.5 rounded-2xl bg-rosebrand-50/50 dark:bg-zinc-800/70 border border-rosebrand-100 dark:border-zinc-700/80 flex items-start gap-3"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-white dark:bg-zinc-900 border border-rosebrand-100 dark:border-zinc-700 text-rosebrand-500 dark:text-rosebrand-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <ClinicalIcon name={q.key} className="w-4 h-4" />
-                  </div>
-                  <div className="text-xs leading-relaxed">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-extrabold text-zinc-900 dark:text-white">
-                        {q.shortLabel}
-                      </span>
-                      <span className="text-[10px] font-semibold text-rosebrand-600 dark:text-rosebrand-400">
-                        ({q.clinicalTitle})
-                      </span>
-                    </div>
-                    <p className="text-zinc-600 dark:text-zinc-300 mt-0.5">{q.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsPainInfoModalOpen(false)}
-              className="w-full py-3 rounded-2xl bg-rosebrand-500 hover:bg-rosebrand-600 text-white text-xs font-bold uppercase tracking-wider transition"
-            >
-              Entendi
-            </button>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </section>
   );
 };

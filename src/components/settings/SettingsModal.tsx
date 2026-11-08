@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useFibroStore } from '../../store/useFibroStore';
 import { formatDateKey, generateClinicalReport } from '../../domain/riskEngine';
 import { downloadClinicalPdfDirect, getFibroPdfFilename } from '../../utils/pdfExport';
@@ -120,13 +121,13 @@ export const SettingsModal: React.FC = () => {
     showToast(`Planilha fibrocare_${dd}-${mm}-${yyyy}.csv exportada!`);
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+      className="fixed inset-0 z-[100] bg-zinc-950/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
       onClick={() => setSettingsModalOpen(false)}
     >
       <div
-        className="bg-white dark:bg-zinc-900 w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl relative space-y-6"
+        className="bg-white dark:bg-zinc-900 w-full max-w-xl max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 sm:p-7 border border-rosebrand-100 dark:border-zinc-800 shadow-2xl relative space-y-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -388,6 +389,7 @@ export const SettingsModal: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
