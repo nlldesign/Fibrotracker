@@ -26,25 +26,60 @@ export interface CloudProfileData {
 }
 
 /**
- * Fetches ONLY the authenticated user's records from public.daily_records.
- * Never merges leftover localStorage records from other accounts/tests.
+ * Flushes any pending offline records belonging to the exact same userId to Supabase
+ * before fetching the authoritative list from public.daily_records.
  */
 export async function fetchAccountRecordsFromSupabase(
-  userId: string
-): Promise<{ cloudRecords: RecordsMap; error?: string }> {
+  userId: string,
+  pendingOfflineRecords?: RecordsMap
+): Promise<{ cloudRecords: RecordsMap; flushedPending: boolean; error?: string }> {
   const supabase = getSupabaseClient();
   if (!supabase) {
-    return { cloudRecords: {}, error: 'Cliente Supabase não configurado.' };
+    return {
+      cloudRecords: {},
+      flushedPending: false,
+      error: 'Cliente Supabase não configurado.',
+    };
   }
 
   try {
+    let flushedPending = false;
+
+    // 1. If this same user had records saved while offline, flush them to Supabase first
+    if (pendingOfflineRecords && Object.keys(pendingOfflineRecords).length > 0) {
+      const rowsToUpsert = Object.entries(pendingOfflineRecords).map(([dateKey, rec]) => ({
+        user_id: userId,
+        record_date: dateKey,
+        pain: rec.pain,
+        spoons: rec.spoons ?? 3,
+        sleep: rec.sleep,
+        fog: rec.fog,
+        body_zones: rec.bodyZones || [],
+        pain_qualities: rec.painQualities || [],
+        triggers: rec.triggers || [],
+        relief_actions: rec.reliefActions || [],
+        cycle_status: classifyRecord(rec) || 'green',
+        notes: rec.notes || '',
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error: flushError } = await supabase
+        .from('daily_records')
+        .upsert(rowsToUpsert, { onConflict: 'user_id,record_date' });
+
+      if (!flushError) {
+        flushedPending = true;
+      }
+    }
+
+    // 2. Fetch authoritative records for this user_id from Supabase
     const { data: cloudRows, error: fetchError } = await supabase
       .from('daily_records')
       .select('*')
       .eq('user_id', userId);
 
     if (fetchError) {
-      return { cloudRecords: {}, error: fetchError.message };
+      return { cloudRecords: {}, flushedPending, error: fetchError.message };
     }
 
     const cloudMap: RecordsMap = {};
@@ -62,10 +97,11 @@ export async function fetchAccountRecordsFromSupabase(
       };
     });
 
-    return { cloudRecords: cloudMap };
+    return { cloudRecords: cloudMap, flushedPending };
   } catch (err: any) {
     return {
       cloudRecords: {},
+      flushedPending: false,
       error: err?.message || 'Erro ao buscar registros do Supabase.',
     };
   }

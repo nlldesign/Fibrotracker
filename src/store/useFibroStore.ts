@@ -22,6 +22,8 @@ const THEME_KEY = 'fibro_theme';
 const PATIENT_META_KEY = 'fibrocare_patient_meta_v2';
 const CHECKIN_MODE_KEY = 'fibro_checkin_default_mode';
 const ACTIVE_USER_KEY = 'fibrocare_active_user_id';
+const PENDING_RECORDS_KEY = 'fibrocare_pending_records_v2';
+const PENDING_PROFILE_KEY = 'fibrocare_pending_profile_v2';
 
 // Clean up legacy demo localStorage keys so app starts completely empty
 try {
@@ -51,6 +53,52 @@ const EMPTY_PATIENT_META: PatientLocalMeta = {
   medicationsList: [],
   clinicalExams: '',
 };
+
+function getPendingRecordDates(): string[] {
+  try {
+    const raw = localStorage.getItem(PENDING_RECORDS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function addPendingRecordDate(dateKey: string): void {
+  try {
+    const current = new Set(getPendingRecordDates());
+    current.add(dateKey);
+    localStorage.setItem(PENDING_RECORDS_KEY, JSON.stringify(Array.from(current)));
+  } catch {
+    // ignore
+  }
+}
+
+function removePendingRecordDate(dateKey: string): void {
+  try {
+    const current = getPendingRecordDates().filter((d) => d !== dateKey);
+    if (current.length === 0) {
+      localStorage.removeItem(PENDING_RECORDS_KEY);
+    } else {
+      localStorage.setItem(PENDING_RECORDS_KEY, JSON.stringify(current));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function clearAllUserLocalCache(): void {
+  try {
+    localStorage.removeItem(ACTIVE_USER_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(PATIENT_META_KEY);
+    localStorage.removeItem(PENDING_RECORDS_KEY);
+    localStorage.removeItem(PENDING_PROFILE_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 function loadPatientMeta(): PatientLocalMeta {
   try {
@@ -248,7 +296,12 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
 
     const { user, patientMeta } = get();
     if (user?.id) {
-      upsertUserProfileToSupabase(user.id, patientMeta, mode);
+      localStorage.setItem(PENDING_PROFILE_KEY, '1');
+      upsertUserProfileToSupabase(user.id, patientMeta, mode).then(({ error }) => {
+        if (!error) {
+          localStorage.removeItem(PENDING_PROFILE_KEY);
+        }
+      });
     }
   },
 
@@ -262,18 +315,24 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
       [dateKey]: record,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    addPendingRecordDate(dateKey);
     set({ records: updated });
 
     const { user } = get();
     if (user?.id) {
       upsertSingleRecordToSupabase(user.id, dateKey, record).then(({ error }) => {
         if (!error) {
+          removePendingRecordDate(dateKey);
           set({
             lastSyncedAt: new Date().toLocaleTimeString('pt-BR', {
               hour: '2-digit',
               minute: '2-digit',
             }),
           });
+        } else {
+          get().showToast(
+            'Salvo no aparelho (sem rede). Sincronizará automaticamente ao reconectar.'
+          );
         }
       });
     }
@@ -283,6 +342,7 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     const updated = { ...get().records };
     delete updated[dateKey];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    removePendingRecordDate(dateKey);
     set({ records: updated });
 
     const { user } = get();
@@ -315,9 +375,7 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
 
   setUser: (user) => {
     if (!user) {
-      localStorage.removeItem(ACTIVE_USER_KEY);
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(PATIENT_META_KEY);
+      clearAllUserLocalCache();
       set({
         user: null,
         records: {},
@@ -329,9 +387,8 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     const previousUserId = localStorage.getItem(ACTIVE_USER_KEY);
     if (previousUserId !== user.id) {
       // Strictly isolate accounts: wipe any cached data from previous account/test
+      clearAllUserLocalCache();
       localStorage.setItem(ACTIVE_USER_KEY, user.id);
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(PATIENT_META_KEY);
       set({
         user,
         records: {},
@@ -348,6 +405,7 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
   },
 
   resetForNewAccount: (user, initialMeta) => {
+    clearAllUserLocalCache();
     localStorage.setItem(ACTIVE_USER_KEY, user.id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify({}));
     localStorage.setItem(PATIENT_META_KEY, JSON.stringify(initialMeta));
@@ -365,13 +423,35 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
   setAuthChecked: (checked) => set({ authChecked: checked }),
 
   syncWithCloud: async () => {
-    const { user } = get();
+    const { user, records, patientMeta, checkinDefaultMode } = get();
     if (!user?.id) return;
 
     set({ isSyncing: true });
 
+    // 1. Check if this exact same user had any offline pending changes to flush first
+    const isSameActiveUser = localStorage.getItem(ACTIVE_USER_KEY) === user.id;
+    const pendingDates = isSameActiveUser ? getPendingRecordDates() : [];
+    const pendingRecordsMap: RecordsMap = {};
+    pendingDates.forEach((dateKey) => {
+      if (records[dateKey]) {
+        pendingRecordsMap[dateKey] = records[dateKey];
+      }
+    });
+
+    if (isSameActiveUser && localStorage.getItem(PENDING_PROFILE_KEY) === '1') {
+      const { error: flushProfErr } = await upsertUserProfileToSupabase(
+        user.id,
+        patientMeta,
+        checkinDefaultMode
+      );
+      if (!flushProfErr) {
+        localStorage.removeItem(PENDING_PROFILE_KEY);
+      }
+    }
+
+    // 2. Flush pending records (if any) and fetch authoritative data from Supabase
     const [recordsResult, profileResult] = await Promise.all([
-      fetchAccountRecordsFromSupabase(user.id),
+      fetchAccountRecordsFromSupabase(user.id, pendingRecordsMap),
       fetchUserProfileFromSupabase(user.id, user.email),
     ]);
 
@@ -379,10 +459,25 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
 
     localStorage.setItem(ACTIVE_USER_KEY, user.id);
 
+    if (recordsResult.flushedPending) {
+      localStorage.removeItem(PENDING_RECORDS_KEY);
+    }
+
     if (!recordsResult.error) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsResult.cloudRecords));
+      // Keep any still-unflushed offline records for this same user so nothing is ever lost
+      const remainingPendingDates = getPendingRecordDates();
+      const finalRecords: RecordsMap = { ...recordsResult.cloudRecords };
+      if (isSameActiveUser && remainingPendingDates.length > 0) {
+        remainingPendingDates.forEach((dateKey) => {
+          if (records[dateKey]) {
+            finalRecords[dateKey] = records[dateKey];
+          }
+        });
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecords));
       set({
-        records: recordsResult.cloudRecords,
+        records: finalRecords,
         lastSyncedAt: new Date().toLocaleTimeString('pt-BR', {
           hour: '2-digit',
           minute: '2-digit',
@@ -390,14 +485,18 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
       });
     }
 
-    if (!profileResult.error && profileResult.profile) {
-      const { checkinDefaultMode, ...cloudMeta } = profileResult.profile;
+    if (
+      !profileResult.error &&
+      profileResult.profile &&
+      localStorage.getItem(PENDING_PROFILE_KEY) !== '1'
+    ) {
+      const { checkinDefaultMode: cloudMode, ...cloudMeta } = profileResult.profile;
       localStorage.setItem(PATIENT_META_KEY, JSON.stringify(cloudMeta));
-      localStorage.setItem(CHECKIN_MODE_KEY, checkinDefaultMode);
+      localStorage.setItem(CHECKIN_MODE_KEY, cloudMode);
       set({
         patientMeta: cloudMeta,
-        checkinDefaultMode,
-        checkinActiveMode: checkinDefaultMode,
+        checkinDefaultMode: cloudMode,
+        checkinActiveMode: cloudMode,
       });
     }
   },
@@ -407,9 +506,7 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     if (supabase) {
       await supabase.auth.signOut();
     }
-    localStorage.removeItem(ACTIVE_USER_KEY);
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(PATIENT_META_KEY);
+    clearAllUserLocalCache();
     set({
       user: null,
       records: {},
@@ -427,8 +524,10 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
 
     const { user, checkinDefaultMode } = get();
     if (user?.id) {
+      localStorage.setItem(PENDING_PROFILE_KEY, '1');
       upsertUserProfileToSupabase(user.id, next, checkinDefaultMode).then(({ error }) => {
         if (!error) {
+          localStorage.removeItem(PENDING_PROFILE_KEY);
           set({
             lastSyncedAt: new Date().toLocaleTimeString('pt-BR', {
               hour: '2-digit',

@@ -57,8 +57,14 @@ export const App: React.FC = () => {
       setAuthChecked(true);
     });
 
+    const handleOnline = () => {
+      syncWithCloud();
+    };
+    window.addEventListener('online', handleOnline);
+
     return () => {
       listener.subscription.unsubscribe();
+      window.removeEventListener('online', handleOnline);
     };
   }, [setUser, setAuthChecked, syncWithCloud]);
 
