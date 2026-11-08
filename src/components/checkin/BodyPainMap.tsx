@@ -40,10 +40,10 @@ export const BodyPainMap: React.FC<BodyPainMapProps> = ({
     }
     return {
       fill: 'currentColor',
-      fillOpacity: 0.14,
+      fillOpacity: 0.28,
       stroke: 'currentColor',
-      strokeOpacity: 0.35,
-      strokeWidth: 1.2,
+      strokeOpacity: 0.65,
+      strokeWidth: 1.4,
     };
   };
 
@@ -124,12 +124,12 @@ export const BodyPainMap: React.FC<BodyPainMapProps> = ({
               activeSide === 'front' ? 'flex' : 'hidden sm:flex'
             }`}
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-400 dark:text-zinc-500 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-300 mb-1">
               Vista Frontal
             </span>
             <svg
               viewBox="0 0 160 320"
-              className="w-36 sm:w-40 h-64 text-rosebrand-300 dark:text-zinc-600 select-none"
+              className="w-36 sm:w-40 h-64 text-rosebrand-300 dark:text-zinc-400 select-none"
             >
               {/* Base subtle body aura */}
               <g className="cursor-pointer transition-all duration-200">
@@ -248,12 +248,12 @@ export const BodyPainMap: React.FC<BodyPainMapProps> = ({
               activeSide === 'back' ? 'flex' : 'hidden sm:flex'
             }`}
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-400 dark:text-zinc-500 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-rosebrand-500 dark:text-rosebrand-300 mb-1">
               Vista Posterior (Costas)
             </span>
             <svg
               viewBox="0 0 160 320"
-              className="w-36 sm:w-40 h-64 text-rosebrand-300 dark:text-zinc-600 select-none"
+              className="w-36 sm:w-40 h-64 text-rosebrand-300 dark:text-zinc-400 select-none"
             >
               <g className="cursor-pointer transition-all duration-200">
                 {/* 1. Occipital / Head Back */}

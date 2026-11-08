@@ -375,8 +375,8 @@ export const CheckinPage: React.FC = () => {
                         exact
                           ? 'bg-rosebrand-500 border-rosebrand-500 text-white shadow-sm scale-[1.02]'
                           : filled
-                          ? 'bg-rosebrand-100/80 dark:bg-rosebrand-950/60 border-rosebrand-300 dark:border-rosebrand-800 text-rosebrand-800 dark:text-rosebrand-200'
-                          : 'bg-white dark:bg-zinc-900 border-rosebrand-100 dark:border-zinc-700 text-zinc-400 dark:text-zinc-500'
+                          ? 'bg-rosebrand-100/80 dark:bg-rosebrand-900/80 border-rosebrand-300 dark:border-rosebrand-500 text-rosebrand-800 dark:text-rosebrand-100'
+                          : 'bg-white dark:bg-zinc-800/90 border-rosebrand-100 dark:border-zinc-700 text-zinc-500 dark:text-zinc-300'
                       }`}
                     >
                       <span className="text-base">{'🥄'.repeat(Math.min(lvl.spoons, 3))}</span>
@@ -413,8 +413,8 @@ export const CheckinPage: React.FC = () => {
                         onClick={() => setFormState({ ...formState, sleep: opt.key })}
                         className={
                           active
-                            ? 'py-2.5 px-2 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition bg-rosebrand-100 border-rosebrand-400 text-rosebrand-800 dark:bg-rosebrand-950/80 dark:border-rosebrand-500 dark:text-rosebrand-200 shadow-sm'
-                            : 'py-2.5 px-2 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition bg-rosebrand-50/30 border-rosebrand-100 text-zinc-600 hover:bg-rosebrand-50 dark:bg-zinc-800/50 dark:border-zinc-700 dark:text-zinc-400'
+                            ? 'py-2.5 px-2 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition bg-rosebrand-100 border-rosebrand-400 text-rosebrand-800 dark:bg-rosebrand-900/90 dark:border-rosebrand-400 dark:text-white shadow-sm'
+                            : 'py-2.5 px-2 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition bg-rosebrand-50/30 border-rosebrand-100 text-zinc-700 hover:bg-rosebrand-50 dark:bg-zinc-800/80 dark:border-zinc-700 dark:text-zinc-200'
                         }
                       >
                         <span className="text-xl">{opt.emoji}</span>
@@ -446,8 +446,8 @@ export const CheckinPage: React.FC = () => {
                         onClick={() => setFormState({ ...formState, fog: opt.key })}
                         className={
                           active
-                            ? 'py-2.5 px-2 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition bg-rosebrand-100 border-rosebrand-400 text-rosebrand-800 dark:bg-rosebrand-950/80 dark:border-rosebrand-500 dark:text-rosebrand-200 shadow-sm'
-                            : 'py-2.5 px-2 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition bg-rosebrand-50/30 border-rosebrand-100 text-zinc-600 hover:bg-rosebrand-50 dark:bg-zinc-800/50 dark:border-zinc-700 dark:text-zinc-400'
+                            ? 'py-2.5 px-2 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition bg-rosebrand-100 border-rosebrand-400 text-rosebrand-800 dark:bg-rosebrand-900/90 dark:border-rosebrand-400 dark:text-white shadow-sm'
+                            : 'py-2.5 px-2 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1 transition bg-rosebrand-50/30 border-rosebrand-100 text-zinc-700 hover:bg-rosebrand-50 dark:bg-zinc-800/80 dark:border-zinc-700 dark:text-zinc-200'
                         }
                       >
                         <span className="text-xl">{opt.emoji}</span>

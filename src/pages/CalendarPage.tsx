@@ -152,16 +152,16 @@ export const CalendarPage: React.FC = () => {
                 'bg-white dark:bg-zinc-800/70 hover:bg-rosebrand-50 dark:hover:bg-zinc-800 border-rosebrand-100/80 dark:border-zinc-800';
               if (cell.status === 'green') {
                 bgClass =
-                  'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100/60';
+                  'bg-emerald-50/70 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-700/80 hover:bg-emerald-100/60';
               } else if (cell.status === 'yellow') {
                 bgClass =
-                  'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 hover:bg-amber-100/60';
+                  'bg-amber-50/80 dark:bg-amber-950/60 border-amber-200 dark:border-amber-700/80 hover:bg-amber-100/60';
               } else if (cell.status === 'red') {
                 bgClass =
-                  'bg-rosebrand-100/80 dark:bg-rosebrand-950/50 border-rosebrand-300 dark:border-rosebrand-800 hover:bg-rosebrand-200/60';
+                  'bg-rosebrand-100/80 dark:bg-rosebrand-950/70 border-rosebrand-300 dark:border-rosebrand-600 hover:bg-rosebrand-200/60';
               } else if (cell.isPredicted) {
                 bgClass =
-                  'bg-rosebrand-50/40 dark:bg-zinc-800/40 border-2 border-dashed border-rosebrand-300 dark:border-rosebrand-700';
+                  'bg-rosebrand-50/40 dark:bg-zinc-800/70 border-2 border-dashed border-rosebrand-300 dark:border-rosebrand-500';
               }
 
               const ringClass = cell.isSelected
@@ -170,7 +170,7 @@ export const CalendarPage: React.FC = () => {
 
               const dayBadgeClass = cell.isToday
                 ? 'w-6 h-6 rounded-full bg-rosebrand-500 text-white font-bold flex items-center justify-center text-xs'
-                : 'text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-200';
+                : 'text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100';
 
               const icons: string[] = [];
               if (cell.rec) {

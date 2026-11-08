@@ -7,6 +7,38 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* High-contrast comfortable Dark Mode overrides for Fibromyalgia sensory comfort */
+.dark {
+  color-scheme: dark;
+}
+
+.dark .text-zinc-500 {
+  color: #d4d4d8 !important; /* zinc-300: crisp and readable */
+}
+
+.dark .text-zinc-400 {
+  color: #e4e4e7 !important; /* zinc-200: high legibility for labels and subtitles */
+}
+
+.dark .text-zinc-600 {
+  color: #e4e4e7 !important;
+}
+
+.dark .text-zinc-700 {
+  color: #f4f4f5 !important; /* zinc-100 */
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #a1a1aa !important; /* zinc-400 instead of very dim gray */
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  color: #fafafa;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -20,7 +52,7 @@ body {
   border-radius: 9999px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #52525b;
 }
 
 @keyframes pulse-soft {
