@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useFibroStore } from '../../store/useFibroStore';
 import { getSupabaseClient } from '../../lib/supabaseClient';
+import { upsertUserProfileToSupabase } from '../../services/recordsSyncService';
 import {
   AlertTriangle,
   Flower2,
@@ -11,7 +12,13 @@ import {
 } from '../common/ClinicalIcons';
 
 export const WelcomeAuthPage: React.FC = () => {
-  const { setUser, syncWithCloud, updatePatientMeta, toggleTheme } = useFibroStore();
+  const {
+    setUser,
+    resetForNewAccount,
+    syncWithCloud,
+    checkinDefaultMode,
+    toggleTheme,
+  } = useFibroStore();
 
   const [mode, setMode] = useState<'signup' | 'login'>('signup');
   const [fullName, setFullName] = useState('');
@@ -37,14 +44,25 @@ export const WelcomeAuthPage: React.FC = () => {
       if (mode === 'signup') {
         const cleanName = fullName.trim() || email.split('@')[0];
         const medStr = continuousMedications.trim();
-        updatePatientMeta({
+        const initialMedsList = medStr
+          ? medStr
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+              .map((name, idx) => ({
+                id: `med_${Date.now()}_${idx}`,
+                name,
+                frequency: '',
+              }))
+          : [];
+
+        const initialMeta = {
           patientName: cleanName,
           doctorName: doctorName.trim(),
           continuousMedications: medStr,
-          medicationsList: medStr
-            ? [{ id: `med_${Date.now()}`, name: medStr, frequency: '' }]
-            : [],
-        });
+          medicationsList: initialMedsList,
+          clinicalExams: '',
+        };
 
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
@@ -57,23 +75,19 @@ export const WelcomeAuthPage: React.FC = () => {
         if (error) throw error;
 
         if (data.user) {
-          await supabase.from('profiles').upsert({
-            id: data.user.id,
-            full_name: cleanName,
-            doctor_name: doctorName.trim() || null,
-            continuous_medications: medStr
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean),
-          });
+          // 1. Strictly isolate new account (start with 0 records and clean localStorage)
+          resetForNewAccount(
+            {
+              id: data.user.id,
+              email: data.user.email,
+              fullName: cleanName,
+              doctorName: doctorName.trim(),
+            },
+            initialMeta
+          );
 
-          setUser({
-            id: data.user.id,
-            email: data.user.email,
-            fullName: cleanName,
-            doctorName: doctorName.trim(),
-          });
-          await syncWithCloud();
+          // 2. Persist full profile (including medications_list and clinical_exams) in public.profiles
+          await upsertUserProfileToSupabase(data.user.id, initialMeta, checkinDefaultMode);
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -86,7 +100,6 @@ export const WelcomeAuthPage: React.FC = () => {
         if (data.user) {
           const userFullName =
             data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || '';
-          updatePatientMeta({ patientName: userFullName });
           setUser({
             id: data.user.id,
             email: data.user.email,

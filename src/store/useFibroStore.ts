@@ -10,8 +10,10 @@ import {
 import { formatDateKey } from '../domain/riskEngine';
 import {
   deleteSingleRecordFromSupabase,
-  syncLocalRecordsToSupabase,
+  fetchAccountRecordsFromSupabase,
+  fetchUserProfileFromSupabase,
   upsertSingleRecordToSupabase,
+  upsertUserProfileToSupabase,
 } from '../services/recordsSyncService';
 import { getSupabaseClient } from '../lib/supabaseClient';
 
@@ -19,6 +21,7 @@ const STORAGE_KEY = 'fibrocare_records_v2';
 const THEME_KEY = 'fibro_theme';
 const PATIENT_META_KEY = 'fibrocare_patient_meta_v2';
 const CHECKIN_MODE_KEY = 'fibro_checkin_default_mode';
+const ACTIVE_USER_KEY = 'fibrocare_active_user_id';
 
 // Clean up legacy demo localStorage keys so app starts completely empty
 try {
@@ -41,8 +44,19 @@ export interface CustomReportRange {
   endDate: string;
 }
 
+const EMPTY_PATIENT_META: PatientLocalMeta = {
+  patientName: '',
+  doctorName: '',
+  continuousMedications: '',
+  medicationsList: [],
+  clinicalExams: '',
+};
+
 function loadPatientMeta(): PatientLocalMeta {
   try {
+    const activeUserId = localStorage.getItem(ACTIVE_USER_KEY);
+    if (!activeUserId) return { ...EMPTY_PATIENT_META };
+
     const saved = localStorage.getItem(PATIENT_META_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
@@ -57,13 +71,7 @@ function loadPatientMeta(): PatientLocalMeta {
   } catch {
     // ignore
   }
-  return {
-    patientName: '',
-    doctorName: '',
-    continuousMedications: '',
-    medicationsList: [],
-    clinicalExams: '',
-  };
+  return { ...EMPTY_PATIENT_META };
 }
 
 function loadInitialCheckinMode(): CheckinMode {
@@ -78,6 +86,13 @@ function loadInitialCheckinMode(): CheckinMode {
 
 function loadInitialRecords(): RecordsMap {
   try {
+    // Only restore cached records if they belong to an explicitly identified active user session
+    const activeUserId = localStorage.getItem(ACTIVE_USER_KEY);
+    if (!activeUserId) {
+      localStorage.removeItem(STORAGE_KEY);
+      return {};
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved) as RecordsMap;
@@ -144,6 +159,7 @@ interface FibroStore {
   // Auth & Settings Actions
   setSettingsModalOpen: (open: boolean) => void;
   setUser: (user: UserProfile | null) => void;
+  resetForNewAccount: (user: UserProfile, initialMeta: PatientLocalMeta) => void;
   setAuthChecked: (checked: boolean) => void;
   syncWithCloud: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -229,6 +245,11 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
   setCheckinDefaultMode: (mode) => {
     localStorage.setItem(CHECKIN_MODE_KEY, mode);
     set({ checkinDefaultMode: mode, checkinActiveMode: mode });
+
+    const { user, patientMeta } = get();
+    if (user?.id) {
+      upsertUserProfileToSupabase(user.id, patientMeta, mode);
+    }
   },
 
   setCheckinActiveMode: (mode) => {
@@ -291,24 +312,49 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
   },
 
   setSettingsModalOpen: (open) => set({ isSettingsModalOpen: open }),
-  setUser: (user) => set({ user }),
-  setAuthChecked: (checked) => set({ authChecked: checked }),
 
-  syncWithCloud: async () => {
-    const { user, records } = get();
-    if (!user?.id) return;
-
-    set({ isSyncing: true });
-    const { mergedRecords, error } = await syncLocalRecordsToSupabase(user.id, records);
-    set({ isSyncing: false });
-
-    if (error) {
+  setUser: (user) => {
+    if (!user) {
+      localStorage.removeItem(ACTIVE_USER_KEY);
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(PATIENT_META_KEY);
+      set({
+        user: null,
+        records: {},
+        patientMeta: { ...EMPTY_PATIENT_META },
+      });
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedRecords));
+    const previousUserId = localStorage.getItem(ACTIVE_USER_KEY);
+    if (previousUserId !== user.id) {
+      // Strictly isolate accounts: wipe any cached data from previous account/test
+      localStorage.setItem(ACTIVE_USER_KEY, user.id);
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(PATIENT_META_KEY);
+      set({
+        user,
+        records: {},
+        patientMeta: {
+          ...EMPTY_PATIENT_META,
+          patientName: user.fullName || user.email?.split('@')[0] || '',
+          doctorName: user.doctorName || '',
+        },
+      });
+      return;
+    }
+
+    set({ user });
+  },
+
+  resetForNewAccount: (user, initialMeta) => {
+    localStorage.setItem(ACTIVE_USER_KEY, user.id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({}));
+    localStorage.setItem(PATIENT_META_KEY, JSON.stringify(initialMeta));
     set({
-      records: mergedRecords,
+      user,
+      records: {},
+      patientMeta: initialMeta,
       lastSyncedAt: new Date().toLocaleTimeString('pt-BR', {
         hour: '2-digit',
         minute: '2-digit',
@@ -316,23 +362,58 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     });
   },
 
+  setAuthChecked: (checked) => set({ authChecked: checked }),
+
+  syncWithCloud: async () => {
+    const { user } = get();
+    if (!user?.id) return;
+
+    set({ isSyncing: true });
+
+    const [recordsResult, profileResult] = await Promise.all([
+      fetchAccountRecordsFromSupabase(user.id),
+      fetchUserProfileFromSupabase(user.id, user.email),
+    ]);
+
+    set({ isSyncing: false });
+
+    localStorage.setItem(ACTIVE_USER_KEY, user.id);
+
+    if (!recordsResult.error) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsResult.cloudRecords));
+      set({
+        records: recordsResult.cloudRecords,
+        lastSyncedAt: new Date().toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      });
+    }
+
+    if (!profileResult.error && profileResult.profile) {
+      const { checkinDefaultMode, ...cloudMeta } = profileResult.profile;
+      localStorage.setItem(PATIENT_META_KEY, JSON.stringify(cloudMeta));
+      localStorage.setItem(CHECKIN_MODE_KEY, checkinDefaultMode);
+      set({
+        patientMeta: cloudMeta,
+        checkinDefaultMode,
+        checkinActiveMode: checkinDefaultMode,
+      });
+    }
+  },
+
   signOut: async () => {
     const supabase = getSupabaseClient();
     if (supabase) {
       await supabase.auth.signOut();
     }
+    localStorage.removeItem(ACTIVE_USER_KEY);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(PATIENT_META_KEY);
     set({
       user: null,
       records: {},
-      patientMeta: {
-        patientName: '',
-        doctorName: '',
-        continuousMedications: '',
-        medicationsList: [],
-        clinicalExams: '',
-      },
+      patientMeta: { ...EMPTY_PATIENT_META },
       lastSyncedAt: null,
       isSettingsModalOpen: false,
     });
@@ -343,6 +424,20 @@ export const useFibroStore = create<FibroStore>((set, get) => ({
     const next = { ...get().patientMeta, ...meta };
     localStorage.setItem(PATIENT_META_KEY, JSON.stringify(next));
     set({ patientMeta: next });
+
+    const { user, checkinDefaultMode } = get();
+    if (user?.id) {
+      upsertUserProfileToSupabase(user.id, next, checkinDefaultMode).then(({ error }) => {
+        if (!error) {
+          set({
+            lastSyncedAt: new Date().toLocaleTimeString('pt-BR', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          });
+        }
+      });
+    }
   },
 
   setReportDaysFilter: (days) => set({ reportDaysFilter: days, reportCustomRange: null }),
